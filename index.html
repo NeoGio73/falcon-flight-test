@@ -195,6 +195,27 @@ body.phone #intro, body.phone #launch, body.phone #endcard { transform: scale(1.
 body.phone #endcard.final { top: 68px !important; transform: scale(1.15); }
 body.phone #dep-skip { transform: scale(1.8); transform-origin: 100% 100%; }
 body.phone #sound-btn { transform: scale(1.5); transform-origin: 50% 0; }
+/* Opening title clip */
+#opening { position: fixed; inset: 0; z-index: 25; background: #000; overflow: hidden; }
+#opening video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#open-title { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-54%); text-align: center; pointer-events: none; padding: 0 16px; }
+#open-title div { opacity: 0; }
+#open-title::before { content: ""; position: absolute; left: 50%; top: 50%; width: min(1100px, 96vw); height: 150%; transform: translate(-50%, -50%); background: radial-gradient(ellipse at center, rgba(2,4,10,0.62) 0%, rgba(2,4,10,0.35) 45%, rgba(2,4,10,0) 72%); opacity: 0; z-index: -1; }
+#opening.play #open-title::before { animation: ot-fade 1.2s ease-out 1.0s forwards, ot-out 0.7s ease-in 6.6s forwards; }   /* a soft dark backing so the title reads over the bright nebula */
+#open-title .t1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(34px, 7.6vw, 108px); line-height: 1.02; letter-spacing: 0.08em; color: #fff;
+  text-shadow: 0 0 14px rgba(115,224,255,0.95), 0 0 42px rgba(115,224,255,0.55), 0 0 90px rgba(242,199,112,0.45); }
+#open-title .t2 { margin-top: 0.55em; font-family: var(--f-display); font-weight: 700; font-size: clamp(13px, 1.9vw, 26px); letter-spacing: 0.55em; color: var(--gold); text-shadow: 0 0 6px #000, 0 0 18px #000; }
+#open-title .t3 { margin-top: 0.7em; font-family: var(--f-body); font-weight: 500; font-size: clamp(12px, 1.5vw, 20px); letter-spacing: 0.06em; color: var(--ink); text-shadow: 0 0 6px #000, 0 1px 14px #000; }
+#opening.play .t1 { animation: ot-in 1.5s cubic-bezier(.2,.7,.2,1) 1.20s forwards, ot-out 0.7s ease-in 6.60s forwards; }
+#opening.play .t2 { animation: ot-fade 1.1s ease-out 2.10s forwards, ot-out 0.7s ease-in 6.60s forwards; }
+#opening.play .t3 { animation: ot-fade 1.1s ease-out 2.70s forwards, ot-out 0.7s ease-in 6.60s forwards; }
+@keyframes ot-in { from { opacity: 0; letter-spacing: 0.7em; filter: blur(14px); } to { opacity: 1; letter-spacing: 0.08em; filter: blur(0); } }
+@keyframes ot-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes ot-out { from { opacity: 1; } to { opacity: 0; transform: scale(1.25); filter: blur(6px); } }
+#open-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+#opening.play #open-flash { animation: ot-flash 1.2s ease-out 9.30s forwards; }
+@keyframes ot-flash { 0% { opacity: 0; } 25% { opacity: 0.9; } 100% { opacity: 0; } }
+#open-skip { position: absolute; right: calc(24px + env(safe-area-inset-right, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); font-size: 15px; padding: 9px 16px; background: rgba(242,199,112,0.92); }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } #cine img.shown { transform: none; } #alert.bad { animation: none; } }
 </style>
 </head>
@@ -308,6 +329,15 @@ body.phone #sound-btn { transform: scale(1.5); transform-origin: 50% 0; }
   </div>
 </div>
 
+<div id="opening" hidden>
+  <video id="open-vid" muted playsinline preload="auto">
+    <source src="opening.webm" type="video/webm">
+    <source src="opening.mp4" type="video/mp4">
+  </video>
+  <div id="open-title"><div class="t1">CHEMISTRY FALCON</div><div class="t2">FLIGHT TEST</div><div class="t3">Energy Storage &nbsp;·&nbsp; Polymers and Plastics</div></div>
+  <div id="open-flash"></div>
+  <button class="cmd" id="open-skip">SKIP &nbsp;▸</button>
+</div>
 <div id="touch" hidden>
   <div id="t-top"><button class="tbtn" id="t-pause" aria-label="Pause">II</button><button class="tbtn" id="t-tilt">TILT ON</button><button class="tbtn" id="t-assist">ASSIST OFF</button><button class="tbtn" id="t-invert">UP/DOWN NORMAL</button></div>
   <div id="t-stick" aria-label="Steering joystick"><div id="t-knob"></div></div>
@@ -1308,7 +1338,7 @@ function finishPrologue() {
   document.getElementById('launch').hidden = false;
   launchBtn.disabled = false; launchBtn.textContent = 'LAUNCH FALCON'; launchBtn.focus();
 }
-introBtn.addEventListener('click', startPrologue);
+introBtn.addEventListener('click', playOpening);
 ship.visible = false;   // the Falcon arrives out of hyperspace when the prologue begins
 
 // ---------- Death Star escape: tractor beam, questions E1-E3, three escape rings, hyperspace jump ----------
@@ -3450,6 +3480,45 @@ function renderPhoneAware() {
   renderer.render(scene, camera);
   if (side) { camera.clearViewOffset(); camera.zoom = 1; camera.updateProjectionMatrix(); }
 }
+
+// ---------- Opening: BEGIN plays a short nebula clip with the title over it, then the prologue starts ----------
+// The clip is silent; the game adds a rising swell, a hit as the title lands, and the hyperdrive as the stars streak.
+const openEl = document.getElementById('opening'), openVid = document.getElementById('open-vid');
+const OPEN = { on: false, done: false, timers: [], kick: 7.80, titleIn: 1.20 };
+function openingSound() {
+  try {
+    if (!AUD.init()) return;
+    const t = AUD.ctx.currentTime;
+    AUD.burst(t + 0.1, OPEN.kick, 0.06, 'bandpass', 140, 2200);             // a swell that rises to the jump
+    AUD.tone(48, t + 0.1, OPEN.kick + 0.4, 'sine', 0.12, 96);
+    OPEN.timers.push(setTimeout(() => { if (OPEN.on) { const n = AUD.ctx.currentTime; AUD.tone(70, n, 1.4, 'sine', 0.2, 38); AUD.burst(n, 1.2, 0.08, 'lowpass', 1600, 90, true); } }, OPEN.titleIn * 1000 + 250));
+    // the recorded hyperdrive, started so its kick lands as the stars streak
+    OPEN.timers.push(setTimeout(() => { if (OPEN.on && !AUD.play('hyperdrive', 0.62)) AUD.sfx('whooshOut'); }, Math.max(0, OPEN.kick - 1.85) * 1000));
+  } catch (err) { /* sound is optional */ }
+}
+function playOpening() {
+  if (PRO.phase !== 'intro' || introBtn.disabled || OPEN.on) return;
+  if (OPEN.done || reduceMotion || openVid.error || openVid.networkState === HTMLMediaElement.NETWORK_NO_SOURCE) { startPrologue(); return; }
+  OPEN.on = true;
+  document.getElementById('intro').hidden = true;
+  openEl.hidden = false; openEl.classList.remove('play'); void openEl.offsetWidth; openEl.classList.add('play');
+  try { openVid.currentTime = 0; } catch (err) { /* not seekable yet */ }
+  const p = openVid.play(); if (p) p.catch(() => endOpening());
+  openVid.onended = () => endOpening();
+  openingSound();
+  OPEN.timers.push(setTimeout(endOpening, 14000));   // never get stuck if the clip stalls
+  setTimeout(() => { if (OPEN.on) document.getElementById('open-skip').focus(); }, 300);   // not during the key press that started it
+}
+function endOpening() {
+  if (!OPEN.on) return;
+  OPEN.on = false; OPEN.done = true;
+  OPEN.timers.forEach(clearTimeout); OPEN.timers = [];
+  openVid.pause(); openEl.hidden = true; openEl.classList.remove('play');
+  document.getElementById('intro').hidden = false;   // startPrologue hides it again
+  startPrologue();
+}
+document.getElementById('open-skip').addEventListener('click', endOpening);
+
 // ---------- Input ----------
 const BLOCK = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 window.addEventListener('keydown', e => {
@@ -3469,7 +3538,8 @@ window.addEventListener('keydown', e => {
     if (e.code === 'Enter' || e.code === 'NumpadEnter') { e.preventDefault(); nextStep(); }
     return;
   }
-  if (PRO.phase === 'intro') { if (e.code === 'Enter' || e.code === 'NumpadEnter') startPrologue(); return; }
+  if (OPEN.on) { if (['Enter', 'NumpadEnter', 'Space', 'Escape'].includes(e.code)) { e.preventDefault(); endOpening(); } return; }
+  if (PRO.phase === 'intro') { if (e.code === 'Enter' || e.code === 'NumpadEnter') { e.preventDefault(); playOpening(); } return; }
   if (PRO.phase !== 'done') { if (PRO.phase === 'ready' && (e.code === 'Enter' || e.code === 'NumpadEnter')) launch(); return; }
   if (J.phase === 'end') { if ((e.code === 'Enter' || e.code === 'NumpadEnter') && !document.getElementById('endcard').classList.contains('final')) location.reload(); return; }
   if (J.phase === 'depart') { if (['Enter', 'NumpadEnter', 'Space', 'Escape'].includes(e.code)) { e.preventDefault(); skipDeparture(); } return; }
@@ -3605,7 +3675,7 @@ function entryFrame(site = 'tatooine') {
   camera.fov = FLIGHT.fovCruise; camera.updateProjectionMatrix();
   stage.hidden = true;
 }
-window.__falcon = { S, M, L, Q, PRO, J, ship, camera, advance, update, keys, launch, beacons, escapeRings, get rings() { return rings; }, openMission, enterMarket, entryFrame, ENTRY, startPrologue, beginCapture, beginDeparture, skipDeparture, D, DEP, lasers, STOPS, get stop() { return stop; }, fleet, AM, beginAmbush, AUD, BEDS, BT, AT, BSTOP, beginBattle, startShield, beginAttackRun, showFinalEnd, TOUCH, touchSteer, enableTouch, RUN, CERT, certCode, certRender, certDownload, SL, beginSuperlaser, deathStar, FB, arriveStop, beginJump, openStopQuiz, finishStop, ST, HT: ST, skipStopDepart, H: STOPS.hoth.state, get hothGroup() { return STOPS.hoth.group; }, arriveHoth: () => arriveStop('hoth') };
+window.__falcon = { S, M, L, Q, PRO, J, ship, camera, advance, update, keys, launch, beacons, escapeRings, get rings() { return rings; }, openMission, enterMarket, entryFrame, ENTRY, startPrologue, beginCapture, beginDeparture, skipDeparture, D, DEP, lasers, STOPS, get stop() { return stop; }, fleet, AM, beginAmbush, AUD, BEDS, BT, AT, BSTOP, beginBattle, startShield, beginAttackRun, showFinalEnd, OPEN, playOpening, endOpening, TOUCH, touchSteer, enableTouch, RUN, CERT, certCode, certRender, certDownload, SL, beginSuperlaser, deathStar, FB, arriveStop, beginJump, openStopQuiz, finishStop, ST, HT: ST, skipStopDepart, H: STOPS.hoth.state, get hothGroup() { return STOPS.hoth.group; }, arriveHoth: () => arriveStop('hoth') };
 </script>
 </body>
 </html>
