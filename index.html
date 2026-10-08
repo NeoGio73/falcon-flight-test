@@ -3418,7 +3418,9 @@ function enableTouch() {
   // iPhones don't let a web page go full screen. Opened from a Home Screen icon, though, the game fills the screen.
   const iOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const fromIcon = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches);
-  document.getElementById('intro-note').textContent = iOS && !fromIcon
+  // (only on the game's own web page: inside another page, such as the Claude viewer, the icon would open that page instead)
+  const framed = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+  document.getElementById('intro-note').textContent = iOS && !fromIcon && !framed
     ? 'Hold your phone sideways, with the sound on. For full screen: tap Share, then Add to Home Screen, and play from the new icon.'
     : 'Hold your phone sideways, with the sound on.';
   document.getElementById('launch-keys').innerHTML = '<b>Tilt to steer:</b> turn the phone like a steering wheel to turn; tip the top away to dive, toward you to climb.<br>'
