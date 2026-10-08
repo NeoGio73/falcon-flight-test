@@ -155,8 +155,9 @@ button.opt:disabled { cursor: default; }
 #t-boost, #t-brake { right: calc(90px + env(safe-area-inset-right, 0px)); width: 92px; height: 72px; padding: 0; font-size: 14px; }
 #t-boost { bottom: calc(108px + env(safe-area-inset-bottom, 0px)); }
 #t-brake { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
-#rotate { position: fixed; inset: 0; z-index: 30; background: var(--void); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; font-family: var(--f-display); font-weight: 700; font-size: 20px; letter-spacing: 0.06em; text-align: center; padding: 0 24px; }
+#rotate { position: fixed; inset: 0; z-index: 30; background: var(--void); color: var(--ink); display: none; flex-direction: column; align-items: center; justify-content: center; gap: 22px; font-family: var(--f-display); font-weight: 700; font-size: 20px; letter-spacing: 0.06em; text-align: center; padding: 0 24px; }
 #rotate .phone-icon { width: 46px; height: 80px; border: 3px solid var(--gold); border-radius: 9px; animation: turn-phone 2.2s ease-in-out infinite; }
+@media (orientation: portrait) { body.phone #rotate { display: flex; } }   /* the browser decides, so it is right the moment the phone turns */
 @keyframes turn-phone { 0%, 25% { transform: rotate(0deg); } 55%, 100% { transform: rotate(-90deg); } }
 body.touch #view canvas { touch-action: none; }
 body.touch { overscroll-behavior: none; -webkit-user-select: none; user-select: none; }
@@ -347,7 +348,7 @@ body.phone #sound-btn { transform: scale(1.5); transform-origin: 50% 0; }
   <button class="tbtn" id="t-boost">BOOST</button>
   <button class="tbtn" id="t-brake">BRAKE</button>
 </div>
-<div id="rotate" hidden><div class="phone-icon"></div><div>Turn your phone sideways to fly.</div></div>
+<div id="rotate"><div class="phone-icon"></div><div>Turn your phone sideways to fly.</div></div>
 
 <script type="importmap">
 { "imports": {
@@ -3428,8 +3429,7 @@ function touchLayout() {
   if (!TOUCH.on) return;
   // the small buttons sit just under the place panel, wherever the scaled HUD puts it
   tEls.top.style.left = `${Math.round(hudX + 24 * hudScale)}px`; tEls.top.style.top = `${Math.round(hudY + 114 * hudScale)}px`;
-  const portrait = TOUCH.phone && window.innerHeight > window.innerWidth;
-  rotateEl.hidden = !portrait;
+  const portrait = TOUCH.phone && (window.matchMedia ? matchMedia('(orientation: portrait)').matches : window.innerHeight > window.innerWidth);
   if (portrait && S.launched && !S.paused && PRO.phase === 'done' && (J.phase === 'tatooine' || J.phase === 'escape' || J.phase === 'planet') && L.phase === 'none' && !quizOpen()) { S.paused = true; showLaunch(true); }
 }
 function blessMedia() {
@@ -3594,7 +3594,11 @@ function resize() {
   stage.style.transform = `translate(${hudX}px, ${hudY}px) scale(${hudScale})`;
   touchLayout();
 }
-window.addEventListener('resize', resize);
+function relayout() { resize(); setTimeout(resize, 120); setTimeout(resize, 450); setTimeout(resize, 1000); }
+window.addEventListener('resize', relayout);
+window.addEventListener('orientationchange', relayout);
+if (screen.orientation && screen.orientation.addEventListener) screen.orientation.addEventListener('change', relayout);
+if (window.visualViewport) visualViewport.addEventListener('resize', relayout);
 resize();
 
 const el = id => document.getElementById(id);
