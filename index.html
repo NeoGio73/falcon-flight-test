@@ -175,6 +175,20 @@ body.phone #mission #q-hint { font-size: 21px; }
 body.phone #mission #q-next { font-size: 27px; padding: 16px 28px; }
 body.phone #mission #q-meter div { font-size: 16px; }
 body.phone #mission.long #q-text { font-size: 28px; }
+/* Phones, side questions (prologue, escape, the shield): a wide side panel, so the ship or the Death Star stays in view on the right */
+body.phone #mission.side { left: 0; top: 0; width: 760px; height: 720px; padding: 22px 30px 18px; gap: 10px; }
+body.phone #alert { left: 770px; width: 490px; }   /* alerts stay beside the side panel */
+body.phone #mission.side .label { font-size: 18px; }
+body.phone #mission.side h2.title { font-size: 30px; }
+body.phone #mission.side #q-text { font-size: 27px; line-height: 1.28; }
+body.phone #mission.side button.opt { font-size: 23px; padding: 9px 12px; grid-template-columns: 34px 1fr; }
+body.phone #mission.side #q-feedback { font-size: 21px; }
+body.phone #mission.side #q-hint { font-size: 18px; }
+body.phone #mission.side #q-next { font-size: 23px; padding: 13px 22px; }
+body.phone #mission.side #q-meter div { font-size: 13px; }
+body.phone #mission.side.long #q-text { font-size: 24px; }
+body.phone #mission.side.long button.opt { font-size: 20px; padding: 7px 11px; }
+body.phone #mission.side.long #q-feedback { font-size: 19px; }
 body.phone #mission.long button.opt { font-size: 24px; padding: 9px 14px; }
 body.phone #mission.long #q-feedback { font-size: 22px; }
 body.phone #intro, body.phone #launch, body.phone #endcard { transform: scale(1.6); }
@@ -3424,6 +3438,18 @@ introBtn.addEventListener('click', () => { if (!TOUCH.on) return; AUD.init(); re
 launchBtn.addEventListener('click', () => { if (TOUCH.on && TOUCH.tilt && !TOUCH.listening && !TOUCH.denied) requestTilt(); });
 setTimeout(() => { if (/[?&]touch=1/.test(location.search) || (window.matchMedia && matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches)) enableTouch(); }, 0);
 
+// On a phone the side question panel covers more than half the screen: shift the 3D view into the part still showing.
+function renderPhoneAware() {
+  const side = TOUCH.phone && quizOpen() && elMission.classList.contains('side');
+  if (side) {
+    const w = view.clientWidth || 1280, h = view.clientHeight || 720, shift = hudX + 1020 * hudScale - w / 2;
+    camera.setViewOffset(w, h, -shift, 0, w, h);
+    if (J.phase === 'shield') camera.zoom = 1.35;   // a closer look at the Death Star in the narrower space
+    camera.updateProjectionMatrix();
+  }
+  renderer.render(scene, camera);
+  if (side) { camera.clearViewOffset(); camera.zoom = 1; camera.updateProjectionMatrix(); }
+}
 // ---------- Input ----------
 const BLOCK = new Set(['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
 window.addEventListener('keydown', e => {
@@ -3565,7 +3591,7 @@ function frame() {
   if (stop && stop.clouds && stop.group.visible) stop.clouds.rotateY(dt * 0.006);
   drawHud(t);
   touchFrame();
-  if (L.phase !== 'video' && L.phase !== 'scene' && !(J.phase === 'depart' && D.stage === 'video') && !(J.phase === 'stopdepart' && (ST.stage === 'video' || ST.stage === 'flyby')) && !(J.phase === 'ambush' && AM.shot === 2) && !(J.phase === 'superlaser' && SL.shot === 3)) renderer.render(scene, camera);   // the cinematic covers the canvas
+  if (L.phase !== 'video' && L.phase !== 'scene' && !(J.phase === 'depart' && D.stage === 'video') && !(J.phase === 'stopdepart' && (ST.stage === 'video' || ST.stage === 'flyby')) && !(J.phase === 'ambush' && AM.shot === 2) && !(J.phase === 'superlaser' && SL.shot === 3)) renderPhoneAware();   // the cinematic covers the canvas
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
