@@ -224,7 +224,7 @@ body.phone #sound-btn { transform: scale(1.5); transform-origin: 50% 0; }
 <div id="view"></div>
 <div id="fade"></div>
 <div id="cine" hidden>
-  <video id="cine-video" playsinline preload="auto">
+  <video id="cine-video" playsinline preload="none">
     <source src="landing.webm" type="video/webm">
     <source src="landing.mp4" type="video/mp4" id="cine-src-last">
   </video>
@@ -387,125 +387,26 @@ const BEACONS = [
 ];
 
 // Tatooine questions T1-T4 from the Falcon Refit Question Bank.
-const QUESTIONS = [
-  { q: 'A Jawa says his D cell has more voltage than a AAA cell. Both are alkaline. What is actually true?',
-    opts: ['The D cell has a higher voltage because it is bigger', 'Both make 1.5 V, but the D cell lasts longer because it holds more material', 'The AAA cell has a higher voltage because its chemicals are packed tighter', 'Both make 1.5 V and last exactly as long'],
-    a: 1, why: 'A battery’s voltage depends on its chemistry, not its size, so every alkaline cell makes 1.5 V. A bigger cell holds more material, so it keeps electrons flowing longer.' },
-  { q: 'A crate of cells is labeled “primary battery.” What does that tell you?',
-    opts: ['It is the ship’s main battery', 'It can be recharged many times', 'It is single-use and cannot be recharged', 'It has the highest voltage available'],
-    a: 2, why: 'Primary batteries are single-use because their reactions run in only one direction. Secondary batteries are rechargeable because their reactions can run both ways.' },
-  { q: 'A bargain lithium-ion pack starts smoking. According to the chapter, what can start a lithium-ion battery fire?',
-    opts: ['The separator between the electrodes breaks, causing a short circuit and intense heat', 'The battery has completely run out of charge after a long day of use', 'The battery’s voltage has dropped too low to power the device', 'The battery was stored in a cool, dry place away from sunlight'],
-    a: 0, why: 'A broken separator lets the two sides touch, which causes a short circuit and a lot of heat. Faulty overcharging circuits can also start fires.' },
-  { q: 'You trade in some old nickel–cadmium (Ni–Cd) cells. Why is recycling Ni–Cd cells more important than recycling alkaline cells?',
-    opts: ['Ni–Cd cells have a higher voltage, so they are more dangerous to throw away', 'Ni–Cd cells are bigger, so they fill up landfills faster', 'Alkaline cells cannot be recycled at all, so there is no point trying', 'Cadmium is a toxic heavy metal that should stay out of landfills'],
-    a: 3, why: 'Cadmium is toxic, so Ni–Cd cells should never go in the trash. Recycling also recovers the metals so they can be used again.' },
-];
+// The question sets are stored scrambled; this unscrambles them as the game starts.
+function QDEC(b64) { const s = atob(b64), out = new Uint8Array(s.length); let x = 1779033703; for (let i = 0; i < s.length; i++) { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; out[i] = s.charCodeAt(i) ^ (x & 255); } return JSON.parse(new TextDecoder().decode(out)); }
+const QUESTIONS = QDEC('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');
 
 // Prologue questions P1-P4 from the Falcon Refit Question Bank.
-const PRO_QUESTIONS = [
-  { head: 'RESTART THE EMERGENCY CELL', q: 'The emergency cell runs on zinc and copper. Zinc metal gives up two electrons: Zn \u2192 Zn\u00b2\u207a + 2e\u207b. What is happening to the zinc?',
-    opts: ['Reduction', 'Oxidation', 'Combustion', 'Neutralization'], a: 1,
-    why: 'Losing electrons is oxidation. Remember OIL RIG: Oxidation Is Loss, Reduction Is Gain.' },
-  { head: 'CHARGE THE BACKUP CELL', q: 'A backup cell uses aluminum: Al\u00b3\u207a + 3e\u207b \u2192 Al. Is this oxidation or reduction?',
-    opts: ['Oxidation, because aluminum loses electrons', 'Oxidation, because aluminum gains electrons', 'Reduction, because aluminum gains electrons', 'Neither, because no electrons move'], a: 2,
-    why: 'The electrons are on the left side of the arrow, so aluminum is taking them in. Gaining electrons is reduction.' },
-  { head: 'WIRE THE CIRCUIT', q: 'In a battery, at which part does oxidation take place?',
-    opts: ['The cathode', 'The wire connecting the two ends', 'The anode', 'The outer case'], a: 2,
-    why: 'Oxidation happens at the anode and reduction at the cathode. Memory trick: anode and oxidation both start with vowels; cathode and reduction both start with consonants.' },
-  { head: 'POWER THE COCKPIT LIGHTS', q: 'The cockpit lights need 12 volts (V) and have a resistance of 4 ohms (\u03a9). Using Ohm\u2019s law, V = I \u00d7 R, what current (I) flows through them?',
-    opts: ['48 A', '8 A', '16 A', '3 A'], a: 3,
-    why: 'Rearrange Ohm\u2019s law to I = V \u00f7 R. That gives 12 V \u00f7 4 \u03a9 = 3 amps (A).' },
-];
+const PRO_QUESTIONS = QDEC('/tS70bzTRjq1+hPdbzMQvIjUMEyvkbWpM1dNAzLuFe5sSqG4a9RS0IQr3aHCg1ndYUaSPq/xjICTfXsDB1i0Ji6VqxOjYmjl+MTOu4GIe9WZzYejxOjxIfTeRDWxFzydiHT3UMl2LGKDpNzM7cn9FB7GJF0UsRcuCu2qWuDuwSmWHNT9PvLpcknrfvSiVmWWS1Ln5Wc9RwDJQsTe6EQS0L7jqSGwrE8QRCOUtONKb/POVcB7g+VBnuPZktT7zaOKp7IuDcSvuLMss/3MJQXYWd2+94bMWARBEkj31Ye2lxlJ86F+Sw9LxTzuza1/NwtnFogo6mHN12gLTL1hzoUARkM3dnttWFOG5yYUvOC9CB/ZVscOYqq3RnzAnf4IobMSC6emT9k25mclpfCncmXfJps1vc3s6d3rDcM6qYw06YHJMy14V59sc0UzXt8gmj/lelopWViIzXOdFGaCgi+ugsSL1NdCa0Bw1tSD0wfcOXUaZPYPTaa3m/QbNuyOl51vFcx8ycIsRzk0DCNhFSOwld7DYcdNoowZ0aDnLUL9itcFda+vUHAFHas/LnBRpKta/i6fFYbFmOi8aZuXxKPpgVvb0gKyuDnL2Cxxpfd+JawWDsmi+whFYG8ikN3MqbNPLy7lzMrC5k7i7sU1bdavAqJHLYPBa3x0j71ewtWar+ulFt0nHFOWYRdnCMvhfMeg7jRivQGo0pe6M+SjUPKTKlKKqsnI8Q18GJE6RJVcDstNTB2cBnh+kvBSmXnfE8E5lvfJ8hSwqLGo0B5Z/2EU3cy6rR9BI9+gm0/sqVGWyPVydDdvNd/BHJ6ic7XmOPki0hPUqgrGUkRKkFTJafvF5nIjik1/wdxjlMDe1pq+dAsZQm8ZFJ9HX90q65CGBqJs8AMgRBBtUQsIGOOeF8UgNtgP/ILJM5yZ0ME4HMqOmuVCM32oTdQGN7RC/fROQg0U6Hwr9JlfwV8h5P8Un1XGbVT9eb8G0MDY25FyAK6oLK7uBO9ZJE4FkcrzmF3uNMjRJquyY66Rr7rTZAWVA1bvEjLJifdip93wSMEcgVXoYNkRTF7Zg+uOj2cGrIqlPshxWrjsPLKFi97nrnqn7zmsJ3VPGZ9ZIxmswjZ8BakN1UU23bYaIFc362ubOtWsoo5a4DLggIjxHjkKecY7I8eJSQ6QPoojgyOV76gY+YtOmtadl4mPDHasJDPOaBoW90yJIrwrM1IGxmAdeqS1920gxObPlFJ7XwOlsumbt/tKjzEuhh2x880nE009rC0cBltN0Tu629abeqtWR2i7MILp3QrX34VlWGPzk96vQrEKr2x+BYP433H7JkiioRybm5tPypmUOpFmGavfD36shbbQXkJg0xo0chfyd1u8p5eOeh3mxyXvdBIgqqgTyO3DrpUNbCILO5K7uch73S9xwIzMUEoUfBlzTdh6iAKqSwkDiP7/L/UmS8cmlMIerEWaJ1Qot41UEscBJ72gcAmenKvQVJweNuj9fIaCfjbNY5ZDaidOUOQc/rpgLUuEkUs536Na1b4izqrwVAq/PE0eF6XrxDaFCO4YjZhg533158nbUW9QpI+rJCjG9HpIxx6ZoSKFTsETfgZSRBXlnNR3FDj7JqhGZjYj6UKHiBsdtj+rvA+gaFNia98+RZQgI4jKy1AHCqYYE/lrqtXQUEbmbJGP7GMJ2BdxIQH1nnu67gCgBMfYnOmfC2iuMUg0dbLNSmFu0KX3wxB4X+svLPF1Psd/zJFfb8nwXTVPIkV7HwHprjdekE4z/2wvvJ//la6SefSrEqDoi4x3A2KUdnvR5+M6IMXAgHDxseghc7Vkb388t8g9UzzoZiX+AMJPfGuTO4i2D8ulZuM+zbU3fGiwgS1RxvDNYzPycIlg9U+cCXI8EzOIW8Shd+wFy0WvArmSvF0L4KD4EDla');
 
 // Death Star escape questions E1-E3 from the Falcon Refit Question Bank.
-const ESC_QUESTIONS = [
-  { head: 'SWAP IN FRESH BATTERIES', q: 'The crew\u2019s datapads need a battery that is rechargeable and stores a lot of energy for its weight, like a phone battery. Which one fits?',
-    opts: ['Alkaline', 'Lithium-ion', 'Lithium (primary)', 'Lead\u2013acid'], a: 1,
-    why: 'Lithium-ion cells are rechargeable and light, which is why phones and laptops use them. Alkaline and primary lithium cells cannot be recharged, and lead\u2013acid batteries are far too heavy for a handheld device.' },
-  { head: 'READ THE SCANNER', q: 'The ship\u2019s scanner shows this reaction at one electrode: 2H\u2082O \u2192 4H\u207a + O\u2082 + 4e\u207b. Is this oxidation or reduction?',
-    opts: ['Reduction, because electrons are gained', 'Reduction, because water is a liquid', 'Neither, because no metal is involved', 'Oxidation, because electrons are given off'], a: 3,
-    why: 'The electrons are on the right side of the arrow, so they are being given off. Losing electrons is oxidation (OIL RIG).' },
-  { head: 'FIRE THE ENGINE IGNITER', q: 'The engine igniter needs 6 V, and you only have 1.5 V alkaline cells. How many must you wire together in a row (in series)?',
-    opts: ['4', '2', '6', '9'], a: 0,
-    why: 'Cells wired in series add their voltages: 4 \u00d7 1.5 V = 6 V. A car battery works the same way, with several cells wired together.' },
-];
+const ESC_QUESTIONS = QDEC('/tS70bzTRjq1+hLPfTdxp5LUIlav4rjENEReEjn/BYt8LcHWONpKg/J5mtXJlBzP7qN5Kur7jo3Sbn8LGFioNiWCqx3tIHP44sKco8+YM9eCnZ61lrS0GPXRVXK5EyqQgXTxV9szLDaZppnLusf9HR3XZ0YA/hwzVb+XTeBqKMmWL85MrGcNoQ6oKurn2I1GAFLRrXYhCAffQs7e7EASzK6j7lasqgwMDCnaq6pCZbifRsA40f5CyKqgit286LqCsrcoDYOhtt4Ys+3FOBnaGpb9u+ePFypdFVT3z4S0k0t1/7lrSxcOjmqt9aFxPcu6qcsqoT/epmZeReZ5xYtuXlgnOiZvcVaX7DsTvqOnRxiKFc0aZ732U2fK06JNkL4eHK2hS8l6zA4I68bOWTaYAZdw+dvw6dHtDeM6qbcz49KVexBzVpkvZkI4EJMImWvNa0BnAgmQwXzXGW7Nxkz4y+av/OtgDgFK+rHT4y/yE1IzZNkjdYL8wrtKd7PAus4tF8550t14BD49QHFxBS6ix9jKcIYErZcQy+zDIOSs6MXeNu3rQ3eG6GR6vp+m98pXomv2AMfD0PWgJtSHyKb+jBLS01D9qznR3CZgruZ7LuJNSZPp9x0fMTA0sN3rtLtPbGCu8eGvggzTxeFgTfDOLYB3EsiDPGB22fB5z8Oaue+pBUvV6k7FMFgkKd3taoan7zR74gG+352oZuWjEfCLNlCN5N3R8QVzFN8sCJVTH9pWWhfIVWgaUiC1sixe4Tp2zJMLEcvz4uSUV7y6sz9ZgMctQYQIYv+9yBvhrEfV0/90fiU5cJLhWZikO6LxcKwjwxnasUaBXghKwEXWLqLqtk8onRhx2sNp2LHSlp7/L0xGBTgUAdgeCfst4MPDC7VqpBYuQw0oVFtBGt6VU8QrJ5EM98idcYqT1dFrFozZj/lCYTyzTJsQO/hY46FGSlpVo1w78M1e1w15pfYYklOTalm4evBP04uM/Zw7B7TmIuD9B+ZMNVhI05uciUeqJ9ncPKbqKqOa4vnbOxuXDl/rFWSBxM5Y1fmieak+yGDEXLorY2zZ8uXdzH8e1sinKIBqGfa6DaiZh5vqvzmk9T+hPHVeCogNbBPj0y05SqMN1kw2lKodZEZ272ibPtGo4YoXsHG1w9j2AjtESoEWa8PbT0+GM4wpgSHepIoV8otWlcLWl6aPEXGnIGfCahhV91aDbLt8NQFDx3wHPOnjymorxK/usno+L2bAz6/c6rhE2Tw5xxryuopDBzNa7VtucVcq6BSKt6mZfJRxal2KC8+r3xOUlddUXnXzl8ToX7cKr2R3BI7pmmK1LA21oAvOzs9widfVNYFmFKzPD3KjnaefUkY4lndgMU2gWFupuZWMfU6ow2vjdRtsuOhXoO3M55wNdjJEOMeqopxqkikl1pfKFR0JZxY2T99on06wHgkByfj4N7FrAshog4ceoEScbR9j9MEbANwGbaeIJlzOxKmVH8RUIKm+MMzPTXuBdsdXeHZAXK4NueEmTBTKrXdO7ZgI5JJHh4efZCSdHHxNe43I6EKiQqdTjposqkXp447dTTYb4MYck2SevScc4h7K5HHBON4BH1BeSRO23p1VSX3oMewRYSU+/0KSwAxYtje1rU65ak9uJM53BdxvOIDPjgqoz69VVsB0sJvAGXvrZVN7GndMwB5jfw+Bwxs=');
 
 // Hoth questions H1-H4 from the Falcon Refit Question Bank.
-const HOTH_QUESTIONS = [
-  { head: 'COLD START', q: 'It is −30 °C (−22 °F) on Hoth. Which can still be charged in that cold: the supercapacitor or the lithium-ion battery?',
-    opts: ['Only the lithium-ion battery', 'Both of them', 'Neither of them', 'Only the supercapacitor'], a: 3,
-    why: 'Supercapacitors can charge anywhere from −40 to 65 °C. Lithium-ion batteries can only be charged between 0 and 45 °C (32 to 113 °F).' },
-  { head: 'THE WATER-BOTTLE MODEL', q: 'In the water-bottle analogy for energy storage, what does the size of the bottle’s opening stand for?',
-    opts: ['Energy density, or how much energy it holds', 'Power density, or how fast it can deliver energy', 'Voltage', 'Cost'], a: 1,
-    why: 'The size of the bottle is energy density (how much it holds). The size of the opening is power density (how fast it pours out). A supercapacitor has the wider opening; a battery is the bigger bottle.' },
-  { head: 'EMERGENCY LIFTOFF', q: 'Imperial walkers are closing in, and the Falcon needs one huge burst of power to lift off right now. Which should it use, and why?',
-    opts: ['Lithium-ion battery, because it delivers energy faster', 'Supercapacitor, because it stores more total energy', 'Supercapacitor, because it delivers energy very quickly', 'Lithium-ion battery, because it charges in seconds'], a: 2,
-    why: 'Supercapacitors have a much higher power density, so they release energy fast. They also recharge in 1 to 10 seconds, compared with 10 to 60 minutes for lithium-ion.' },
-  { head: 'THE LONG CRUISE', q: 'For the long cruise to Bespin, the Falcon needs to store as much energy as possible for its weight. Which should it use?',
-    opts: ['Lithium-ion battery, because it stores much more energy per kilogram', 'Supercapacitor, because it stores much more energy per kilogram', 'Supercapacitor, because it can be recharged about a million times', 'Either one, because they store the same amount'], a: 0,
-    why: 'Lithium-ion batteries store 100 to 200 watt-hours per kilogram, compared with 5 to 50 for supercapacitors. In the water-bottle picture, the battery is the bigger bottle, which is why battery-powered electric cars go farther on one charge.' },
-];
+const HOTH_QUESTIONS = QDEC('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');
 // Bespin questions B1-B4 from the Falcon Refit Question Bank.
-const BESPIN_QUESTIONS = [
-  { head: 'WHAT COMES OUT?', q: 'A hydrogen fuel cell takes in hydrogen (H₂) and oxygen (O₂). What comes out?',
-    opts: ['Carbon dioxide and water', 'Smoke, a flame and heat', 'Water, electricity and some heat', 'Gasoline'], a: 2,
-    why: 'The fuel cell combines hydrogen and oxygen to make water, and the electrons it moves become electricity. Nothing burns, so there is no flame. No carbon dioxide forms because the fuel contains no carbon.' },
-  { head: 'WHERE HYDROGEN COMES FROM', q: 'According to the chapter, where does about 95% of hydrogen come from, and what is the catch?',
-    opts: ['Methane (natural gas), but the process releases carbon dioxide and carbon monoxide', 'Splitting water, but the process releases carbon dioxide', 'The air, and collecting it takes no energy', 'Methane, and the only other product is water'], a: 0,
-    why: 'Most hydrogen is made from methane, and those reactions give off CO₂ and CO. Splitting water with electricity or sunlight makes no CO or CO₂, but it takes a lot of energy.' },
-  { head: 'STORING HYDROGEN', q: 'Hydrogen gas takes up a huge amount of space: about 11 liters for a single gram. What does the chapter call the safest way to store it?',
-    opts: ['In high-pressure tanks', 'In open containers', 'Dissolved in gasoline', 'Inside the structure of metal hydrides'], a: 3,
-    why: 'Compounds called metal hydrides, such as LiH, can take up hydrogen and release it again later. The chapter calls this the safest option, since high-pressure tanks can be dangerous.' },
-  { head: 'CLEANER TRANSPORTATION', q: 'Cloud City is switching its fleet to electric vehicles. Why are electric vehicles not completely emission-free?',
-    opts: ['Their batteries give off carbon dioxide gas whenever the car is moving', 'Building the cars and making the electricity to charge them both release greenhouse gases', 'Their electric motors burn a small amount of gasoline to get started', 'They are completely emission-free, from the factory to the road'], a: 1,
-    why: 'Electric cars give off no exhaust while driving. But building them, recycling them and running the power plants that charge them all release greenhouse gases. How much depends on how the local electricity is made.' },
-];
+const BESPIN_QUESTIONS = QDEC('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');
 // Geonosis questions G1-G4 from the Falcon Refit Question Bank.
-const GEONOSIS_QUESTIONS = [
-  { head: 'WHAT IS A POLYMER?', q: 'What is a polymer?',
-    opts: ['A small molecule with only one or two atoms', 'A metal used in batteries', 'A long chain of small repeating units called monomers', 'A mixture of gases'], a: 2,
-    why: 'Polymers are huge molecules made of many small monomers linked together, like a strand of paper clips.' },
-  { head: 'A TOUGH NEW CAP', q: 'The Falcon’s fuel tank needs a new cap that is very tough. Which Big Six plastic is used for bottle caps?',
-    opts: ['Polypropylene (PP, recycling code 5)', 'Low-density polyethylene (LDPE, code 4)', 'Polystyrene (PS, code 6)', 'Polyvinyl chloride (PVC, code 3)'], a: 0,
-    why: 'Polypropylene is very tough and resists oils, which makes it a good fit for bottle caps, yogurt containers and luggage.' },
-  { head: 'MELT AND REMOLD', q: 'The foundry melts down old plastic parts to mold new ones. Which of these can NOT be melted and reshaped?',
-    opts: ['A milk jug (HDPE)', 'A soda bottle (PET)', 'A foam cup (polystyrene)', 'The rubber sole of a boot'], a: 3,
-    why: 'All of the Big Six are thermoplastics, which can be melted and reshaped again and again. Thermosetting plastics, like rubber shoe soles, harden permanently when heated.' },
-  { head: 'STIFF CARGO CRATES', q: 'The cargo crates must be stiff and strong. Why is high-density polyethylene (HDPE) stiffer than low-density polyethylene (LDPE)?',
-    opts: ['HDPE is made from a completely different monomer that forms stronger chains', 'HDPE’s chains have few branches, so they pack closely and hold each other more strongly', 'HDPE’s chains have more branches, which tangle together and lock in place', 'HDPE has tiny bits of metal mixed in to make it harder'], a: 1,
-    why: 'Both are made from the same monomer, ethylene. LDPE’s chains have many branches and can’t pack closely. HDPE’s straighter chains pack tightly, which makes it stiffer and stronger, with a higher melting point.' },
-];
+const GEONOSIS_QUESTIONS = QDEC('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');
 // Kashyyyk questions K1-K4 from the Falcon Refit Question Bank.
-const KASHYYYK_QUESTIONS = [
-  { head: 'LINKING MONOMERS', q: 'In condensation polymerization, what happens each time two monomers link together?',
-    opts: ['The monomers simply add on, with nothing left over', 'A small molecule, usually water, is released', 'The monomers melt together', 'Electrons are released as electricity'], a: 1,
-    why: 'Condensation polymers give off a small molecule, usually water, at each link. In addition polymers like polyethylene, the monomers simply add on with nothing left over.' },
-  { head: 'NATURAL POLYMERS', q: 'The workshop is built from wood, and Wookiee fur is made of protein. Which of these is NOT a natural polymer?',
-    opts: ['Cellulose, found in wood and cotton', 'Proteins, found in wool and hair', 'Starch', 'Polystyrene'], a: 3,
-    why: 'Cellulose, starch and proteins are natural polymers, and most natural polymers form by condensation. Polystyrene is a synthetic plastic made from petroleum.' },
-  { head: 'BLASTER-PROOF PLATING', q: 'The Falcon needs new hull plating that can stop blaster bolts. Which polymer is used in bulletproof vests?',
-    opts: ['Kevlar, a polyamide', 'Polystyrene, used in foam cups', 'PLA, a compostable plastic', 'PVC, used in garden hoses'], a: 0,
-    why: 'Kevlar is a polyamide, a condensation polymer joined by amide links, like nylon and proteins. Its strong chains make it tough enough for bulletproof vests. Nylon, another polyamide, was the first substitute for silk.' },
-  { head: 'COMPOSTABLE TRAYS', q: 'The crew packs compostable food trays made of PLA (polylactic acid). What makes PLA different from most plastics?',
-    opts: ['It is made from petroleum and never breaks down', 'It contains chlorine', 'It is made from renewable plant sources and can be composted', 'It cannot be molded into shapes'], a: 2,
-    why: 'PLA is made from lactic acid, which comes from renewable sources like plant sugars. It looks and feels like PET, but it can break down by composting.' },
-];
+const KASHYYYK_QUESTIONS = QDEC('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');
 // Kamino questions KA1-KA4 from the Falcon Refit Question Bank.
-const KAMINO_QUESTIONS = [
-  { head: 'SORT BY CODE', q: 'A piece of debris is a clear soft-drink bottle stamped with recycling code 1. Which plastic is it?',
-    opts: ['High-density polyethylene (HDPE)', 'Polyvinyl chloride (PVC)', 'Polyethylene terephthalate (PET)', 'Polystyrene (PS)'], a: 2,
-    why: 'Code 1 is PET, the clear, strong, shatter-resistant plastic used for soft-drink bottles.' },
-  { head: 'THE FLOAT TEST', q: 'A load of PET bottles is mixed with HDPE and PP pieces. The densities are PET 1.38 g/cm³, HDPE 0.96 g/cm³ and PP 0.90 g/cm³. What happens when you dump the mix into water (1.00 g/cm³)?',
-    opts: ['HDPE and PP float, and PET sinks', 'Everything floats', 'PET floats, and HDPE and PP sink', 'Everything sinks'], a: 0,
-    why: 'A plastic floats when it is less dense than the liquid. HDPE and PP are less dense than water, so they float. PET is denser, so it sinks and can be collected from the bottom.' },
-  { head: 'BAN IT NOW?', q: 'The council learns that DEHP, an additive in some PVC products, can leak out over time. No study has proven it harms people, but it is suspected of disrupting hormones. If the council bans it now, before harm is proven, what is that called?',
-    opts: ['The Four Rs', 'The precautionary principle', 'Cradle-to-cradle recycling', 'Shifting baselines'], a: 1,
-    why: 'The precautionary principle means acting before harm is fully proven, when the effects could be serious or permanent. It is why DEHP and BPA were banned from some plastic bottles, pacifiers and children’s toys.' },
-  { head: 'BURN FOR POWER', q: 'Some debris can’t be recycled, so Kamino burns it to generate electricity. Which of the Four Rs is this?',
-    opts: ['Reduce', 'Reuse', 'Recycle', 'Recover'], a: 3,
-    why: 'Recover means getting materials or energy back from things that can’t be recycled. Reduce means using less material, reuse means using something again, and recycle means turning used items into new ones.' },
-];
+const KAMINO_QUESTIONS = QDEC('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');
 // Planet stops after the Death Star (the Unity build had none of these): each one is
 // hyperspace arrival -> four rings -> dive -> landing clip -> scene -> questions -> takeoff clip -> jump.
 function makePath(start, pts) {
@@ -697,10 +598,55 @@ function glowTexture(rgba) {
 
 // ---------- Load models ----------
 const loader = new GLTFLoader();
+// The Falcon and Tatooine load first, and then the game can start. Everything else (the Death Star, each later
+// stop, the Star Destroyers, the Slave I, the battle's fighters) loads in the background, two at a time, in the
+// order the game needs it. If a student gets somewhere before its pieces have arrived, the game waits there.
 let loaded = 0;
+const READY = {}, BGQ = [];
 const launchBtn = document.getElementById('launch-btn');
 const introBtn = document.getElementById('intro-btn');
-function modelReady() { if (++loaded === 10 + Object.keys(STOP_DEFS).length) { warmUp(); introBtn.disabled = false; introBtn.textContent = 'BEGIN'; introBtn.focus(); } }
+function bgAdd(order, key, run) { BGQ.push({ order, key, run }); }
+function bgStart() {
+  BGQ.sort((a, b) => a.order - b.order);
+  let active = 0;
+  const pump = () => {
+    while (active < 2 && BGQ.length) {
+      const it = BGQ.shift(); active++;
+      let finished = false;
+      it.run(() => { if (finished) return; finished = true; READY[it.key] = true; active--; pump(); });
+    }
+  };
+  pump();
+}
+function modelReady() {
+  if (++loaded !== 2) return;   // the Falcon and Tatooine
+  warmUp(); introBtn.disabled = false; introBtn.textContent = 'BEGIN'; introBtn.focus();
+  setTimeout(() => { bgStart(); preloadClip(vid); }, 400);
+}
+// Upload a newly loaded model's textures and compile its shaders right away, so it doesn't stall the game later.
+function warmObject(obj) {
+  try {
+    const was = obj.visible; obj.visible = true;
+    obj.traverse(o => { if (!o.material) return; [].concat(o.material).forEach(m => { for (const k of ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'alphaMap']) if (m[k]) renderer.initTexture(m[k]); }); });
+    renderer.compile(obj, camera, scene);
+    obj.visible = was;
+  } catch (e) { /* it will compile on first use instead */ }
+}
+const FIGHTER_KEYS = ['xwing', 'ywing', 'awing', 'tie', 'bomber'].map(k => 'fighter_' + k);
+// what each destination needs before the game can show it
+function destNeeds(dest) {
+  if (dest === 'battle') return ['deathstar', ...FIGHTER_KEYS];
+  return STOP_DEFS[dest] ? [dest] : [];
+}
+const assetsReady = keys => keys.every(k => READY[k]);
+let loadingNote = false;
+function showLoadingNote() { if (loadingNote) return; loadingNote = true; showAlert('LOADING THE NEXT STOP  /  Just a moment', 'ok'); }
+function clearLoadingNote() { if (!loadingNote) return; loadingNote = false; hideAlert(); }
+function whenReady(keys, fn) {
+  if (assetsReady(keys)) { fn(); return; }
+  showLoadingNote();
+  const iv = setInterval(() => { if (assetsReady(keys)) { clearInterval(iv); clearLoadingNote(); fn(); } }, 300);
+}
 function warmUp() {
   // Upload every texture and compile every shader while the title screen is up, so the
   // Death Star (big textures) doesn't stall the game the first time it comes into view.
@@ -740,16 +686,17 @@ function packGLB(json, bin) {
   u8.set(bin, o + 8);
   return buf;
 }
-function loadModel(name, what, onLoad) {
+function loadModel(name, what, onLoad, onErr) {
+  const fail = e => { loadFail(what, e); if (onErr) onErr(); };
   fetch(`${name}.json`)
     .then(r => { if (!r.ok) throw new Error(`${name}.json: HTTP ${r.status}`); return r.json(); })
     .then(json => {
       const bin = base64ToBytes(json.buffers[0].uri.slice(json.buffers[0].uri.indexOf(',') + 1));
       delete json.buffers[0].uri;
       json.buffers[0].byteLength = bin.length;
-      loader.parse(packGLB(json, bin), '', onLoad, e => loadFail(what, e));
+      loader.parse(packGLB(json, bin), '', onLoad, fail);
     })
-    .catch(e => loadFail(what, e));
+    .catch(fail);
 }
 loadModel('falcon', 'Falcon', gltf => {
   const visual = gltf.scene;   // Unity "Falcon Visual": scale 0.16226, offset (-0.031, -0.130, -1.513)
@@ -796,7 +743,7 @@ loadModel('tatooine', 'Tatooine', gltf => {
   planet.add(holder);
   modelReady();
 });
-function loadStop(st) {
+function loadStop(st, done) {
   loadModel(st.model, st.name, gltf => {
     const model = gltf.scene;
     fixInsideOutMeshes(model);
@@ -838,10 +785,11 @@ function loadStop(st) {
       holder.quaternion.setFromUnitVectors(pole, new THREE.Vector3(0, 1, 0)).premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0.3).normalize(), st.upright * D2R));
     }
     st.group.add(holder);
-    modelReady();
-  });
+    warmObject(st.group);
+    done();
+  }, done);
 }
-Object.values(STOPS).forEach(loadStop);
+Object.values(STOPS).forEach((st, i) => bgAdd(2 + i, st.key, done => loadStop(st, done)));   // hoth 2, bespin 3, geonosis 4, kashyyyk 5, kamino 6
 
 // ---------- Flight state (FalconFlightController fields) ----------
 const S = { launched: false, paused: false, throttle: 0, speed: 0, checkpoint: 0, advisory: '', advisoryUntil: 0 };
@@ -904,7 +852,6 @@ function update(dt) {
   // Unity: transform.Rotate(-delta.y * .10f, delta.x * .10f, 0) while right mouse is held (delta.y is up-positive)
   if (rightDown && (dragX || dragY)) rotateUnity(dragY * FLIGHT.mouseSteer, dragX * FLIGHT.mouseSteer, 0);
   dragX = dragY = 0;
-  if (window.__autopilot) { const c = window.__autopilot(); advance(d, c[0], c[1], c[2], false, false); return; }   // automated tests only
   advance(d, pitch, yaw, roll, boost, brake);
 }
 
@@ -1211,7 +1158,7 @@ function openMission() {
 }
 function returnFromMission() {
   S.paused = false; S.speed = 0; S.throttle = 0;
-  if (M.completed && J.phase === 'tatooine') { beginDeparture(); return; }
+  if (M.completed && J.phase === 'tatooine') { whenReady(['deathstar'], beginDeparture); return; }
   if (L.phase === 'scene') leaveScene();
   document.getElementById('hud').hidden = false;
   warn(M.completed ? 'JAWA MARKET COMPLETE  /  Press W to continue flying' : 'MISSION SAVED THIS FLIGHT  /  Press M to return to the market');
@@ -1361,14 +1308,15 @@ const deathStar = new THREE.Group();
 deathStar.quaternion.copy(UQ(0, 0.976296, 0, 0.21643965));   // Unity "Death Star" transform
 deathStar.visible = false;
 scene.add(deathStar);
-loadModel('deathstar', 'Death Star', gltf => {
+bgAdd(1, 'deathstar', done => loadModel('deathstar', 'Death Star', gltf => {
   const v = gltf.scene;
   v.rotation.y = Math.PI;          // same FBX -> three.js handedness fix as the Falcon
   v.scale.setScalar(21.989056);    // Unity scale: model radius 10 -> 220
   v.traverse(o => { if (o.isMesh && o.material.emissiveMap) o.material.emissiveIntensity = 1.2; });
   deathStar.add(v);
-  modelReady();
-});
+  warmObject(deathStar);
+  done();
+}, done));
 
 // Tractor beam: a widening, banded shaft from the Death Star's surface to the Falcon.
 const beam = (() => {
@@ -1634,7 +1582,7 @@ function tickBeamBreak(dt) {
 }
 function beginJump(dest = 'hoth', title = 'DEATH STAR / JUMP POINT') {
   endAmbush(); endSuperlaser(false);
-  J.phase = 'jump'; J.t = 0; J.dest = dest;
+  J.phase = 'jump'; J.t = 0; J.dest = dest; J.hold = 0;
   clearLasers(); hideAlert();
   escapeRings.forEach(r => { r.group.visible = false; });
   setPlace(title, 'JUMPING TO HYPERSPACE');
@@ -1644,7 +1592,7 @@ function beginJump(dest = 'hoth', title = 'DEATH STAR / JUMP POINT') {
   S.throttle = 0;
 }
 function updateStreaksJump(u) {
-  const len = 2 + 460 * smoothstep(0.1, 0.85, u), shift = 3200 * u * u, p = streaks.pos;
+  const len = 2 + 460 * smoothstep(0.1, 0.85, u), shift = 3200 * u * u + 2600 * (J.hold || 0), p = streaks.pos;
   streaks.seeds.forEach((sd, i) => {
     const z = ((sd.z + shift + 1200) % 1600) - 1200;
     p[i * 6] = sd.x; p[i * 6 + 1] = sd.y; p[i * 6 + 2] = z;
@@ -1658,7 +1606,10 @@ function updateJump(dt) {
   // First the stars stretch around the Falcon while the camera rides along,
   // then the camera holds still and the Falcon shoots away, then a white flash.
   J.t += dt;
-  const u = clamp01(J.t / (reduceMotion ? 1.2 : 3.2));
+  const dur = reduceMotion ? 1.2 : 3.2;
+  if (J.t >= 0.78 * dur && !assetsReady(destNeeds(J.dest))) { J.t = 0.78 * dur; J.hold = (J.hold || 0) + dt; showLoadingNote(); }   // wait in hyperspace
+  else if (J.hold) { J.hold = 0; clearLoadingNote(); }
+  const u = clamp01(J.t / dur);
   forwardOf(ship, fwd);
   const spd = u < JUMP_GO ? lerp(40, 140, u / JUMP_GO) : 140 + 9000 * Math.pow((u - JUMP_GO) / (1 - JUMP_GO), 2);
   ship.position.addScaledVector(fwd, spd * dt); S.speed = spd;
@@ -1811,6 +1762,8 @@ function updateStopDepart(dt) {
   if (ST.stage !== 'shot') return;
   stopShot();
   if (ST.t >= STOP_SHOT) {
+    if (stop.interlude === 'destroyers' && !READY.stardestroyer) { ST.t = STOP_SHOT; showLoadingNote(); return; }
+    clearLoadingNote();
     ST.stage = 'none';
     if (stop.interlude === 'destroyers' && fleet.children.length === 3) { beginAmbush(); return; }
     if (stop.interlude === 'superlaser') { beginSuperlaser(); return; }
@@ -1827,7 +1780,7 @@ function skipStopDepart() {
   fadeEl.style.background = '#000'; fadeEl.style.transition = 'opacity 0.35s ease'; fadeEl.style.opacity = '1';
   setTimeout(() => {
     cine.hidden = true; cine.classList.remove('xfade');
-    if (next) { camera.add(streaks.lines); if (next === 'battle') beginBattle(); else arriveStop(next); fadeEl.style.background = ''; }
+    if (next) whenReady(destNeeds(next), () => { camera.add(streaks.lines); if (next === 'battle') beginBattle(); else arriveStop(next); fadeEl.style.background = ''; });
     else showStopEnd();
   }, 380);
 }
@@ -1852,7 +1805,7 @@ function showStopEnd() {
 const SD_LEN = 320;   // game units bow to stern (the Falcon is about 13)
 const fleet = new THREE.Group(); fleet.visible = false; scene.add(fleet);
 let bridgeEye = null;   // a point on the lead destroyer's bridge tower, looking out over the bow
-loadModel('stardestroyer', 'Star Destroyer', gltf => {
+bgAdd(4.5, 'stardestroyer', done => loadModel('stardestroyer', 'Star Destroyer', gltf => {
   const model = gltf.scene;
   model.traverse(o => { if (o.isMesh) { o.material.flatShading = true; o.material.needsUpdate = true; } });   // no stored normals: faceted hull
   const box = new THREE.Box3().setFromObject(model, true), c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
@@ -1864,8 +1817,9 @@ loadModel('stardestroyer', 'Star Destroyer', gltf => {
     const sd = new THREE.Group(); const v = i ? holder.clone() : holder; sd.add(v); fleet.add(sd);
     if (!i) { bridgeEye = new THREE.Object3D(); bridgeEye.position.set(0, 300 - c.y, 150 - c.z); model.add(bridgeEye); }   // tower front, model units
   }
-  modelReady();
-});
+  warmObject(fleet);
+  done();
+}, done));
 const AM = { t: 0, shot: 0, fire: 0, q0: new THREE.Quaternion(), q1: new THREE.Quaternion(), slots: [] };
 const amA = new THREE.Vector3(), amB = new THREE.Vector3(), amC = new THREE.Vector3(), amQ = new THREE.Quaternion(), amM = new THREE.Matrix4();
 const caption = document.getElementById('caption'), bridgeFrame = document.getElementById('bridge-frame');
@@ -2267,11 +2221,11 @@ function endSuperlaser(hideAll) {
 // The ship is drawn by a second, transparent renderer over the scene picture (cropped the same way), so the
 // picture stays exactly as it is and only the ship moves.
 let flybyModel = null;
-(() => {
+bgAdd(6.5, 'slave1', bgDone => {
   // This model carries its textures inside its buffer; load those through <img> (blob: URLs) rather than fetch().
   const l = new GLTFLoader();
   l.register(parser => { parser.textureLoader = new THREE.TextureLoader(parser.options.manager); return { name: 'images_via_img' }; });
-  const done = () => modelReady();
+  const done = () => bgDone();
   fetch('slave1.json')
     .then(r => { if (!r.ok) throw new Error(`slave1.json: HTTP ${r.status}`); return r.json(); })
     .then(json => {
@@ -2280,7 +2234,7 @@ let flybyModel = null;
       l.parse(packGLB(json, bin), '', g => { flybyModel = g.scene; done(); }, e => { console.warn('flyover ship skipped', e); done(); });
     })
     .catch(e => { console.warn('flyover ship skipped', e); done(); });
-})();
+});
 const placeBox = document.getElementById('place-title').parentElement;
 const FB = { t: 0, dur: 6.4, renderer: null, scene: null, camera: null, ship: null, glow: null, canvas: null, curve: null, snd: null, sndOn: false };
 const FB_LEN = 50;   // ship length in flyover units (about 70 px long over the water)
@@ -2690,7 +2644,7 @@ function floatAttributes(g) {
 }
 for (const [key, F] of Object.entries(FIGHTERS)) {
   F.key = key; F.meshes = []; F.inner = new THREE.Matrix4();
-  loadEmbedded(key, root => {
+  bgAdd(8, 'fighter_' + key, done => loadEmbedded(key, root => {
     if (root) {
       root.updateMatrixWorld(true);
       const box = new THREE.Box3(), parts = [];
@@ -2699,9 +2653,10 @@ for (const [key, F] of Object.entries(FIGHTERS)) {
       // every model is built nose toward +Z; turn it to fly toward -Z like everything else here
       F.inner.makeRotationY(Math.PI).multiply(new THREE.Matrix4().makeScale(s, s, s)).multiply(new THREE.Matrix4().makeTranslation(-c.x, -c.y, -c.z));
       F.meshes = parts.map(p => { const im = new THREE.InstancedMesh(p.g, p.m, F.count); im.frustumCulled = false; for (let i = 0; i < F.count; i++) im.setMatrixAt(i, ZERO_M); battleGroup.add(im); return im; });
+      F.meshes.forEach(warmObject);
     }
-    modelReady();
-  });
+    done();
+  }));
 }
 const BOLT_SPEED = 380, BOLT_MAX = 320;
 function makeBoltPool(color) {
@@ -2749,26 +2704,7 @@ const BSTOP = {
   state: { started: false, completed: false, level: 0 }, rings: [],
 };
 BSTOP.rings = BSTOP.path.beacons.map(makeRing); BSTOP.rings.forEach(r => { r.group.visible = false; });
-const FINAL_QUESTIONS = [
-  { head: 'GREEN COPPER', q: 'The Statue of Liberty is covered in copper, which slowly turned from shiny brown to green. What caused the change?',
-    opts: ['The copper gained electrons from sunlight, which changed its color', 'The statue was painted green to protect it from the sea air', 'The copper lost electrons as it reacted with air and moisture (oxidation)', 'The copper slowly turned into a green plastic coating'], a: 2,
-    why: 'Copper exposed to oxygen, water and other gases in the air is oxidized. That forms a green coating that protects the metal underneath.' },
-  { head: 'BUILT TO LAST', q: 'Plastics like HDPE and polystyrene share a property with the CFCs once used in refrigerators, and it makes both a long-term problem. What is it?',
-    opts: ['They dissolve quickly in water and spread through rivers and oceans', 'They are very stable and last a long time in the environment', 'They are radioactive and give off harmful radiation as they age', 'They break down within a few weeks and release toxic gases'], a: 1,
-    why: 'The stability that makes plastics useful also means they persist in landfills and oceans for many years. Some CFCs last 100 years or more in the atmosphere.' },
-  { head: 'RECYCLING CHAMPION', q: 'Which of these is recycled almost every time, far more often than plastic bottles?',
-    opts: ['Foam cups', 'Plastic grocery bags', 'PVC pipes', 'Lead–acid car batteries'], a: 3,
-    why: 'Lead–acid batteries are almost always recycled. Only about 30% of plastic bottles are recycled, and bottles made of PVC or LDPE are recycled less than 5% of the time.' },
-  { head: 'SOFTER PVC', q: 'Why are plasticizers like DEHP added to PVC?',
-    opts: ['To make it softer and more flexible, as in garden hoses', 'To make it easier to recycle along with other plastics', 'To make it conduct electricity like a metal wire', 'To make it break down quickly by composting'], a: 0,
-    why: 'Plasticizers are mixed in, not chemically bonded, to soften PVC for products like garden hoses and shower curtains. Because they aren’t bonded, they can slowly leak out over time.' },
-  { head: 'RECHARGEABLE?', q: 'Which of these batteries can be recharged?',
-    opts: ['Alkaline', 'Lithium (primary)', 'Nickel–metal hydride (NiMH)', 'All three'], a: 2,
-    why: 'NiMH batteries are rechargeable (secondary) and are used in hybrid cars. Alkaline and primary lithium batteries are single-use.' },
-  { head: 'CUT THE FUEL LINES', q: 'The Death Star’s power generator runs on giant fuel cells, and the X-wings plan to cut its fuel lines. Why would that shut the generator down?',
-    opts: ['Fuel cells store all their energy inside, like a battery', 'A fuel cell only works while fuel and oxygen keep flowing in', 'Fuel cells need sunlight to work', 'It wouldn’t, because fuel cells run without fuel'], a: 1,
-    why: 'Unlike a battery, a fuel cell does not store its chemicals inside. Fuel and oxygen must keep flowing in for it to make electricity, so cutting the fuel cuts the power.' },
-];
+const FINAL_QUESTIONS = QDEC('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');
 QSETS.battle = {
   label: 'Death Star', unit: 'Shield layer', layout: 'side', questions: FINAL_QUESTIONS,
   meter: ['Copper', 'Plastics', 'Recycle', 'PVC', 'Recharge', 'Fuel cell'], level: () => BT.level,
@@ -3691,7 +3627,6 @@ function entryFrame(site = 'tatooine') {
   camera.fov = FLIGHT.fovCruise; camera.updateProjectionMatrix();
   stage.hidden = true;
 }
-window.__falcon = { S, M, L, Q, PRO, J, ship, camera, advance, update, keys, launch, beacons, escapeRings, get rings() { return rings; }, openMission, enterMarket, entryFrame, ENTRY, startPrologue, beginCapture, beginDeparture, skipDeparture, D, DEP, lasers, STOPS, get stop() { return stop; }, fleet, AM, beginAmbush, AUD, BEDS, BT, AT, BSTOP, beginBattle, startShield, beginAttackRun, showFinalEnd, OPEN, playOpening, endOpening, TOUCH, touchSteer, enableTouch, RUN, CERT, certCode, certRender, certDownload, SL, beginSuperlaser, deathStar, FB, arriveStop, beginJump, openStopQuiz, finishStop, ST, HT: ST, skipStopDepart, H: STOPS.hoth.state, get hothGroup() { return STOPS.hoth.group; }, arriveHoth: () => arriveStop('hoth') };
 </script>
 </body>
 </html>
