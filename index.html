@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#04070d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Galvanic Falcon">
 <meta name="description" content="The Galvanic Falcon: an extra-credit game on energy storage (Ch. 8) and polymers and plastics (Ch. 9).">
 <title>The Galvanic Falcon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3163,7 +3170,7 @@ async function certRender() {
   const blob = await new Promise(res => CERT.canvas.toBlob(res, 'image/png'));
   if (seq !== CERT.seq || !blob) return null;
   if (CERT.url) URL.revokeObjectURL(CERT.url);
-  CERT.blob = blob; CERT.url = URL.createObjectURL(blob);
+  CERT.blob = blob; CERT.blobName = info.name; CERT.url = URL.createObjectURL(blob);
   certEls.img.src = CERT.url; certEls.img.hidden = false;
   certEls.code.textContent = info.name ? info.code : '';
   return { blob, info };
@@ -3179,9 +3186,27 @@ function certFile(name) {
   const safe = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'Student';
   return `Galvanic_Falcon_Certificate_${safe}.png`;
 }
+// On an iPhone or iPad the share sheet is the dependable way to keep the picture ("Save Image" puts it in Photos,
+// "Save to Files" in Files), and it also works when the game was opened from a Home Screen icon.
+const CERT_IOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+function certShare(name) {
+  // the picture must already be drawn for this name: the share sheet only opens straight from the tap
+  if (!CERT_IOS || !navigator.share || !navigator.canShare || !CERT.blob || CERT.blobName !== name) return false;
+  let file;
+  try { file = new File([CERT.blob], certFile(name), { type: 'image/png' }); if (!navigator.canShare({ files: [file] })) return false; } catch (err) { return false; }
+  CERT.saving = true; certEls.btn.disabled = true;
+  navigator.share({ files: [file] })
+    .then(() => certStatus('Done. Upload the picture to the D2L assignment dropbox.', 'ok'))
+    .catch(err => certStatus(err && err.name === 'AbortError'
+      ? 'Cancelled. Tap DOWNLOAD CERTIFICATE again and choose Save Image, or press and hold the picture.'
+      : 'Press and hold the certificate picture, then choose Save to Photos.', err && err.name === 'AbortError' ? '' : 'warn'))
+    .finally(() => { CERT.saving = false; certEls.btn.disabled = !certHasName(certCleanName()); });
+  return true;
+}
 async function certDownload() {
   const name = certCleanName();
   if (!CERT.ready || CERT.saving || !certHasName(name)) return;
+  if (!(window.claude && typeof window.claude.use === 'function') && certShare(name)) return;
   CERT.saving = true; certEls.btn.disabled = true; certStatus('Preparing your certificate…');
   try {
     const r = await certRender();
@@ -3201,7 +3226,7 @@ async function certDownload() {
       const a = document.createElement('a');
       a.href = CERT.url; a.download = filename; a.rel = 'noopener';
       document.body.appendChild(a); a.click(); a.remove();
-      certStatus(`Downloading ${filename}. If nothing appears, right-click the picture and choose “Save image as…”.`, 'ok');
+      certStatus(TOUCH.on ? `Downloading ${filename}. If nothing appears, press and hold the picture and save it.` : `Downloading ${filename}. If nothing appears, right-click the picture and choose “Save image as…”.`, 'ok');
     }
   } catch (err) {
     certStatus('Something went wrong drawing the certificate. Try again, or take a screenshot of this screen.', 'warn');
@@ -3390,7 +3415,12 @@ function enableTouch() {
   TOUCH.phone = Math.min(window.innerWidth, window.innerHeight) < 600 || Math.min(screen.width, screen.height) < 600;
   document.body.classList.add('touch'); document.body.classList.toggle('phone', TOUCH.phone);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, TOUCH.phone ? 1.25 : 1.5));
-  document.getElementById('intro-note').textContent = 'Hold your phone sideways, with the sound on.';
+  // iPhones don't let a web page go full screen. Opened from a Home Screen icon, though, the game fills the screen.
+  const iOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const fromIcon = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches);
+  document.getElementById('intro-note').textContent = iOS && !fromIcon
+    ? 'Hold your phone sideways, with the sound on. For full screen: tap Share, then Add to Home Screen, and play from the new icon.'
+    : 'Hold your phone sideways, with the sound on.';
   document.getElementById('launch-keys').innerHTML = '<b>Tilt to steer:</b> turn the phone like a steering wheel to turn; tip the top away to dive, toward you to climb.<br>'
     + '<b>Throttle:</b> slide the bar on the right up to speed up. Hold <b>BOOST</b> to go faster, <b>BRAKE</b> to stop.<br>'
     + '<b>No tilt?</b> A joystick appears instead. <b>ASSIST</b> steers to the next ring for you.';
