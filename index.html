@@ -3337,8 +3337,9 @@ function requestTilt() {
   const listen = () => { if (!TOUCH.listening) { window.addEventListener('deviceorientation', onOrient); TOUCH.listening = true; } };
   if (DOE && typeof DOE.requestPermission === 'function') {
     if (TOUCH.listening) return;
-    TOUCH.asked = true;
-    try { DOE.requestPermission().then(r => { if (r === 'granted') listen(); else TOUCH.denied = true; }).catch(() => { TOUCH.denied = true; }); } catch (err) { TOUCH.denied = true; }
+    TOUCH.asked = true; TOUCH.asking = true;   // the prompt takes focus away: don't treat that as leaving the game
+    const settle = () => { TOUCH.asking = false; TOUCH.needCal = true; };
+    try { DOE.requestPermission().then(r => { settle(); if (r === 'granted') listen(); else TOUCH.denied = true; }).catch(() => { settle(); TOUCH.denied = true; }); } catch (err) { settle(); TOUCH.denied = true; }
   } else if (DOE) listen();
 }
 // a response curve with a small dead zone, so holding still really is still
@@ -3435,7 +3436,11 @@ function blessMedia() {
   // iPhones only let a page play sound it started from a tap: start and stop the voiced clips once now.
   if (TOUCH.blessed) return; TOUCH.blessed = true;
   for (const m of [vid, vaderAudio]) {
-    try { const p = m.play(); if (p) p.then(() => { m.pause(); try { m.currentTime = 0; } catch (err) { /* fine */ } }).catch(() => {}); } catch (err) { /* fine */ }
+    try {
+      const was = m.muted; m.muted = true;   // silent: this only unlocks the clip for later
+      const done = () => { m.pause(); try { m.currentTime = 0; } catch (err) { /* fine */ } m.muted = was; };
+      const p = m.play(); if (p) p.then(done).catch(() => { m.muted = was; }); else done();
+    } catch (err) { /* fine */ }
   }
 }
 function goFullscreen() {
@@ -3449,11 +3454,11 @@ function enableTouch() {
   TOUCH.phone = Math.min(window.innerWidth, window.innerHeight) < 600 || Math.min(screen.width, screen.height) < 600;
   document.body.classList.add('touch'); document.body.classList.toggle('phone', TOUCH.phone);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, TOUCH.phone ? 1.25 : 1.5));
-  document.getElementById('intro-note').textContent = 'Hold your phone sideways with the sound on. If it asks about motion, tap Allow so you can steer by tilting.';
+  document.getElementById('intro-note').textContent = 'Hold your phone sideways, with the sound on.';
   document.getElementById('launch-keys').innerHTML = '<b>Tilt to steer:</b> turn the phone like a steering wheel to turn; tip the top away to dive, toward you to climb.<br>'
     + '<b>Throttle:</b> slide the bar on the right up to speed up. Hold <b>BOOST</b> to go faster, <b>BRAKE</b> to stop.<br>'
     + '<b>No tilt?</b> A joystick appears instead. <b>ASSIST</b> steers to the next ring for you.';
-  document.getElementById('launch-note').textContent = 'However you hold the phone at the start counts as level. Tap RECENTER if steering drifts.';
+  document.getElementById('launch-note').textContent = 'If your phone asks about motion, tap Allow so you can steer by tilting. However you hold it counts as level.';
   document.getElementById('mission-reopen').textContent = 'RETURN TO MARKET';
   document.getElementById('cert-tip').textContent = 'If the download doesn’t start, press and hold the picture and save it.';
   if (elNext.textContent.includes('ENTER')) elNext.innerHTML = elNext.innerHTML.replace(' &nbsp;/&nbsp; ENTER', '');
@@ -3464,7 +3469,7 @@ function enableTouch() {
 // Turn touch mode on for touch screens, or the first time someone touches the screen.
 window.addEventListener('pointerdown', e => { if (e.pointerType === 'touch') enableTouch(); }, true);
 window.addEventListener('pointerup', () => { if (TOUCH.on) AUD.init(); }, true);
-introBtn.addEventListener('click', () => { if (!TOUCH.on) return; AUD.init(); requestTilt(); blessMedia(); goFullscreen(); });
+introBtn.addEventListener('click', () => { if (!TOUCH.on) return; AUD.init(); blessMedia(); goFullscreen(); });
 launchBtn.addEventListener('click', () => { if (TOUCH.on && TOUCH.tilt && !TOUCH.listening && !TOUCH.denied) requestTilt(); });
 setTimeout(() => { if (/[?&]touch=1/.test(location.search) || (window.matchMedia && matchMedia('(pointer: coarse)').matches && !matchMedia('(pointer: fine)').matches)) enableTouch(); }, 0);
 
@@ -3507,12 +3512,19 @@ function playOpening() {
   openVid.onended = () => endOpening();
   openingSound();
   OPEN.timers.push(setTimeout(endOpening, 14000));   // never get stuck if the clip stalls
+  let lastT = -1, still = 0;
+  OPEN.timers.push(setInterval(() => {
+    if (!OPEN.on) return;
+    if (openVid.paused && !openVid.ended) { const q = openVid.play(); if (q) q.catch(() => {}); }   // phones sometimes pause it; carry on
+    still = openVid.currentTime > lastT + 0.05 ? 0 : still + 1; lastT = openVid.currentTime;
+    if (still >= 8) endOpening();   // two seconds without moving: skip to the game
+  }, 250));
   setTimeout(() => { if (OPEN.on) document.getElementById('open-skip').focus(); }, 300);   // not during the key press that started it
 }
 function endOpening() {
   if (!OPEN.on) return;
   OPEN.on = false; OPEN.done = true;
-  OPEN.timers.forEach(clearTimeout); OPEN.timers = [];
+  OPEN.timers.forEach(id => { clearTimeout(id); clearInterval(id); }); OPEN.timers = [];
   openVid.pause(); openEl.hidden = true; openEl.classList.remove('play');
   document.getElementById('intro').hidden = false;   // startPrologue hides it again
   startPrologue();
@@ -3552,7 +3564,7 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyR') resetFlight();
 });
 window.addEventListener('keyup', e => keys.delete(e.code));
-window.addEventListener('blur', () => { keys.clear(); rightDown = false; if (S.launched && PRO.phase === 'done' && !quizOpen() && L.phase === 'none' && (J.phase === 'tatooine' || J.phase === 'escape' || J.phase === 'planet')) { S.paused = true; showLaunch(true); } });
+window.addEventListener('blur', () => { keys.clear(); rightDown = false; if (TOUCH.asking) return; if (S.launched && PRO.phase === 'done' && !quizOpen() && L.phase === 'none' && (J.phase === 'tatooine' || J.phase === 'escape' || J.phase === 'planet')) { S.paused = true; showLaunch(true); } });
 const canvas = renderer.domElement;
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 canvas.addEventListener('pointerdown', e => { canvas.focus(); if (e.button === 2) { rightDown = true; canvas.setPointerCapture(e.pointerId); } });
