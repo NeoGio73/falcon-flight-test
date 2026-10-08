@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#04070d">
-<meta name="description" content="Chemistry Falcon flight test: an extra-credit game on energy storage (Ch. 8) and polymers and plastics (Ch. 9).">
-<title>Chemistry Falcon</title>
+<meta name="description" content="The Galvanic Falcon: an extra-credit game on energy storage (Ch. 8) and polymers and plastics (Ch. 9).">
+<title>The Galvanic Falcon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
@@ -203,7 +203,7 @@ body.phone #sound-btn { transform: scale(1.5); transform-origin: 50% 0; }
 #open-title div { opacity: 0; }
 #open-title::before { content: ""; position: absolute; left: 50%; top: 50%; width: min(1100px, 96vw); height: 150%; transform: translate(-50%, -50%); background: radial-gradient(ellipse at center, rgba(2,4,10,0.62) 0%, rgba(2,4,10,0.35) 45%, rgba(2,4,10,0) 72%); opacity: 0; z-index: -1; }
 #opening.play #open-title::before { animation: ot-fade 1.2s ease-out 1.0s forwards, ot-out 0.7s ease-in 6.6s forwards; }   /* a soft dark backing so the title reads over the bright nebula */
-#open-title .t1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(34px, 7.6vw, 108px); line-height: 1.02; letter-spacing: 0.08em; color: #fff;
+#open-title .t1 { font-family: var(--f-display); font-weight: 700; font-size: clamp(28px, 5.7vw, 96px); line-height: 1.02; letter-spacing: 0.08em; color: #fff;
   text-shadow: 0 0 14px rgba(115,224,255,0.95), 0 0 42px rgba(115,224,255,0.55), 0 0 90px rgba(242,199,112,0.45); }
 #open-title .t2 { margin-top: 0.55em; font-family: var(--f-display); font-weight: 700; font-size: clamp(13px, 1.9vw, 26px); letter-spacing: 0.55em; color: var(--gold); text-shadow: 0 0 6px #000, 0 0 18px #000; }
 #open-title .t3 { margin-top: 0.7em; font-family: var(--f-body); font-weight: 500; font-size: clamp(12px, 1.5vw, 20px); letter-spacing: 0.06em; color: var(--ink); text-shadow: 0 0 6px #000, 0 1px 14px #000; }
@@ -275,7 +275,7 @@ body.phone #sound-btn { transform: scale(1.5); transform-origin: 50% 0; }
   <div id="alert" class="abs" hidden></div>
 
   <div class="panel" id="intro" style="left:350px;top:188px;width:580px;height:336px;pointer-events:auto">
-    <div class="abs label" style="left:30px;top:24px">Chemistry Falcon &nbsp;•&nbsp; Flight test</div>
+    <div class="abs label" style="left:30px;top:24px">The Galvanic Falcon &nbsp;•&nbsp; Flight test</div>
     <div class="abs title" style="left:30px;top:46px">PROLOGUE / DEAD IN SPACE</div>
     <div class="abs text" style="left:30px;top:96px;width:520px">The Falcon is dropping out of hyperspace near Tatooine, and something is wrong with the power. Answer four questions on oxidation, reduction and circuits to bring the ship back online, then fly to the Jawa market.</div>
     <button class="cmd abs" id="intro-btn" style="left:30px;top:252px" disabled>LOADING MODELS…</button>
@@ -335,7 +335,7 @@ body.phone #sound-btn { transform: scale(1.5); transform-origin: 50% 0; }
     <source src="opening.webm" type="video/webm">
     <source src="opening.mp4" type="video/mp4">
   </video>
-  <div id="open-title"><div class="t1">CHEMISTRY FALCON</div><div class="t2">FLIGHT TEST</div><div class="t3">Energy Storage &nbsp;·&nbsp; Polymers and Plastics</div></div>
+  <div id="open-title"><div class="t1">THE GALVANIC FALCON</div><div class="t2">FLIGHT TEST</div><div class="t3">Energy Storage &nbsp;·&nbsp; Polymers and Plastics</div></div>
   <div id="open-flash"></div>
   <button class="cmd" id="open-skip">SKIP &nbsp;▸</button>
 </div>
@@ -3171,7 +3171,7 @@ function drawCert(ctx, info) {
     ctx.beginPath(); ctx.moveTo(x, y + sy * 80); ctx.lineTo(x, y); ctx.lineTo(x + sx * 80, y); ctx.stroke();
   }
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = muted; ctx.font = disp(600, 24); certSpaced(ctx, 'CHEMISTRY FALCON  ·  FLIGHT TEST', cx, 150, 7);
+  ctx.fillStyle = muted; ctx.font = disp(600, 24); certSpaced(ctx, 'THE GALVANIC FALCON  ·  FLIGHT TEST', cx, 150, 7);
   ctx.fillStyle = gold; ctx.font = disp(700, 74); certSpaced(ctx, 'CERTIFICATE OF COMPLETION', cx, 252, 5);
   ctx.fillStyle = muted; ctx.font = body(500, 32); ctx.fillText('This certifies that', cx, 330);
   // the name, shrunk to fit
@@ -3241,7 +3241,7 @@ function certRefresh() {
 function certStatus(text, kind = '') { certEls.status.textContent = text; certEls.status.className = 'abs small ' + kind; }
 function certFile(name) {
   const safe = name.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 60) || 'Student';
-  return `Falcon_Certificate_${safe}.png`;
+  return `Galvanic_Falcon_Certificate_${safe}.png`;
 }
 async function certDownload() {
   const name = certCleanName();

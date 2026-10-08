@@ -1,4 +1,4 @@
-# Chemistry Falcon: Flight Test
+# The Galvanic Falcon
 
 An extra-credit game for a non-majors chemistry course, covering Chapter 8 (Energy Storage) and Chapter 9 (Polymers and Plastics). Students fly from stop to stop, answer chemistry checks at each one, and finish with a downloadable completion certificate.
 
