@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Galvanic Falcon · Extra Credit</title>
+<meta name="description" content="Animated banner for The Galvanic Falcon, an extra-credit chemistry game on energy storage and polymers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root {
+  --void: #04070d;
+  --gold: #f2c770;
+  --cyan: #73e0ff;
+  --ink: #e6ecf4;
+  --muted: #9aa6b6;
+  --red: #ff6a55;
+  --f-display: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+  --f-body: 'Barlow', 'Segoe UI', system-ui, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--void); color: var(--ink); font-family: var(--f-body); overflow: hidden; -webkit-font-smoothing: antialiased; }
+#stage { position: fixed; inset: 0; overflow: hidden;
+  background: radial-gradient(120% 90% at 75% 40%, #141a33 0%, #080c18 45%, var(--void) 100%); }
+/* the poster shows until the 3D scene is ready, and stays if it can't run */
+#poster { position: absolute; inset: 0; background: url(banner_poster.jpg) center / cover no-repeat; opacity: 0.0; transition: opacity 0.6s ease; }
+body.poster #poster { opacity: 1; }
+#c { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 1.2s ease; }
+body.live #c { opacity: 1; }
+/* darken behind the words so they stay readable over the action */
+#scrim { position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(4,7,13,0.92) 0%, rgba(4,7,13,0.72) 30%, rgba(4,7,13,0.18) 52%, rgba(4,7,13,0) 64%),
+              linear-gradient(0deg, rgba(4,7,13,0.55) 0%, rgba(4,7,13,0) 22%); }
+/* corner brackets, like a targeting display */
+.corner { position: absolute; width: 22px; height: 22px; border: 0 solid rgba(242,199,112,0.55); pointer-events: none; }
+.corner.tl { left: 12px; top: 12px; border-left-width: 2px; border-top-width: 2px; }
+.corner.tr { right: 12px; top: 12px; border-right-width: 2px; border-top-width: 2px; }
+.corner.bl { left: 12px; bottom: 12px; border-left-width: 2px; border-bottom-width: 2px; }
+.corner.br { right: 12px; bottom: 12px; border-right-width: 2px; border-bottom-width: 2px; }
+#copy { position: absolute; left: clamp(22px, 4.2vw, 48px); top: 50%; transform: translateY(-50%); width: min(46%, 470px); }
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 600; font-size: clamp(12px, 1.5vw, 15px);
+  letter-spacing: 0.22em; color: var(--gold); text-transform: uppercase; }
+.eyebrow .pts { color: var(--void); background: var(--gold); padding: 3px 8px 2px; letter-spacing: 0.12em; border-radius: 2px; }
+h1 { margin: 10px 0 0; font-family: var(--f-display); font-weight: 700; line-height: 0.92; letter-spacing: 0.02em; text-transform: uppercase; }
+h1 .the { display: block; font-size: clamp(15px, 2.2vw, 22px); letter-spacing: 0.32em; color: var(--cyan); margin-bottom: 6px; }
+h1 .big { display: block; font-size: clamp(34px, 6.4vw, 66px); color: #fff; text-shadow: 0 0 28px rgba(115,224,255,0.35), 0 2px 0 rgba(0,0,0,0.6); }
+.lede { margin: 14px 0 0; font-size: clamp(14px, 1.75vw, 18px); line-height: 1.42; color: var(--ink); max-width: 30em; text-shadow: 0 1px 8px rgba(0,0,0,0.8); }
+.lede b { color: var(--gold); font-weight: 600; }
+.cta { margin-top: clamp(14px, 2.4vw, 22px); display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; }
+.btn { display: inline-flex; align-items: center; gap: 10px; font-family: var(--f-display); font-weight: 700; font-size: clamp(14px, 1.7vw, 17px);
+  letter-spacing: 0.1em; color: var(--void); background: var(--gold); text-decoration: none; padding: 11px 18px 10px; border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(242,199,112,0.4), 0 0 24px rgba(242,199,112,0.28); transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease; }
+.btn:hover { background: #ffd98a; box-shadow: 0 0 0 1px rgba(255,217,138,0.7), 0 0 34px rgba(242,199,112,0.5); transform: translateY(-1px); }
+.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.btn svg { width: 16px; height: 16px; }
+.meta { font-size: clamp(12px, 1.4vw, 14px); color: var(--muted); letter-spacing: 0.02em; }
+#hud { position: absolute; right: 22px; bottom: 18px; display: flex; align-items: center; gap: 9px; font-family: var(--f-display); font-weight: 600;
+  font-size: 12px; letter-spacing: 0.2em; color: rgba(255,154,133,0.92); text-shadow: 0 1px 6px #000; pointer-events: none; opacity: 0; transition: opacity 0.8s ease; }
+body.live #hud { opacity: 1; }
+#hud .blip { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px var(--red); animation: blink 1.1s steps(2, start) infinite; }
+@keyframes blink { to { visibility: hidden; } }
+/* words arrive one after another */
+#copy > * { opacity: 0; transform: translateY(10px); animation: rise 0.7s cubic-bezier(.2,.7,.2,1) forwards; }
+#copy > :nth-child(1) { animation-delay: 0.1s; }
+#copy > :nth-child(2) { animation-delay: 0.22s; }
+#copy > :nth-child(3) { animation-delay: 0.36s; }
+#copy > :nth-child(4) { animation-delay: 0.5s; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+/* narrow (a phone, or a thin course column): words on top, the dogfight underneath */
+@media (max-aspect-ratio: 5/4) {
+  #scrim { background: linear-gradient(180deg, rgba(4,7,13,0.94) 0%, rgba(4,7,13,0.8) 38%, rgba(4,7,13,0.2) 62%, rgba(4,7,13,0) 74%); }
+  #copy { top: clamp(20px, 6vw, 34px); transform: none; width: auto; right: 22px; }
+  h1 .big { font-size: clamp(32px, 11vw, 54px); }
+  h1 .the { font-size: clamp(13px, 3.8vw, 18px); }
+  .eyebrow { font-size: clamp(11px, 3.1vw, 14px); }
+  .lede { font-size: clamp(14px, 3.9vw, 17px); }
+  .btn { font-size: clamp(13px, 3.8vw, 16px); }
+  .meta { font-size: clamp(12px, 3.3vw, 14px); }
+  #hud { display: none; }
+}
+@media (max-height: 300px) and (min-aspect-ratio: 5/4) { .lede { display: none; } }
+@media (prefers-reduced-motion: reduce) { #copy > * { animation: none; opacity: 1; transform: none; } #hud .blip { animation: none; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="poster"></div>
+  <canvas id="c" aria-hidden="true"></canvas>
+  <div id="scrim"></div>
+  <div class="corner tl"></div><div class="corner tr"></div><div class="corner bl"></div><div class="corner br"></div>
+  <main id="copy">
+    <div class="eyebrow"><span>Extra credit</span><span class="pts">10 POINTS</span></div>
+    <h1><span class="the">The Galvanic</span><span class="big">Falcon</span></h1>
+    <p class="lede">Outrun the Empire and power the Falcon with chemistry: <b>batteries, fuel cells, polymers and plastics</b> from Chapters 8 and 9.</p>
+    <div class="cta">
+      <a class="btn" href="https://neogio73.github.io/falcon-flight-test/" target="_blank" rel="noopener">LAUNCH THE GAME
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h9M8.5 4.5 12 8l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></svg></a>
+      <span class="meta">Computer, tablet or phone</span>
+    </div>
+  </main>
+  <div id="hud" aria-hidden="true"><span class="blip"></span><span id="hud-text">3 TIE FIGHTERS IN PURSUIT</span></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script>
+  // If WebGL isn't available (or the 3D scene never gets going), the still picture is shown instead.
+  setTimeout(() => { if (!document.body.classList.contains('live')) document.body.classList.add('poster'); }, 9000);
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
+
+const V3 = THREE.Vector3;
+const Y = new V3(0, 1, 0);
+const params = new URLSearchParams(location.search);
+const CAPTURE = params.has('capture');   // test/recording mode: time only advances when asked
+const STILL = !CAPTURE && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const frac = x => x - Math.floor(x);
+function mulberry(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+let rand = mulberry(20261013);
+
+// ---------- renderer, scene, camera ----------
+const canvas = document.getElementById('c');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: CAPTURE });
+} catch (err) { document.body.classList.add('poster'); throw err; }
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.08;
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x070b16, 0.0019);
+const camera = new THREE.PerspectiveCamera(30, 2, 0.5, 9000);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.28;
+
+const sun = new THREE.DirectionalLight(new THREE.Color(1.0, 0.92, 0.8), 3.1);
+sun.position.set(-0.55, 0.55, 0.62).multiplyScalar(100);
+const rim = new THREE.DirectionalLight(new THREE.Color(0.45, 0.62, 1.0), 1.5);
+rim.position.set(0.8, 0.15, -0.6).multiplyScalar(100);
+scene.add(sun, rim, new THREE.AmbientLight(new THREE.Color(0.32, 0.36, 0.48), 0.5));
+
+// ---------- sky: a faint nebula and stars ----------
+{
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(6000, 48, 24), new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    vertexShader: `varying vec3 vD; void main() { vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `varying vec3 vD;
+      float h(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+      float n(vec3 x) { vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+        return mix(mix(mix(h(i), h(i + vec3(1,0,0)), f.x), mix(h(i + vec3(0,1,0)), h(i + vec3(1,1,0)), f.x), f.y),
+                   mix(mix(h(i + vec3(0,0,1)), h(i + vec3(1,0,1)), f.x), mix(h(i + vec3(0,1,1)), h(i + vec3(1,1,1)), f.x), f.y), f.z); }
+      float fbm(vec3 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * n(p); p *= 2.03; a *= 0.5; } return s; }
+      void main() {
+        vec3 d = normalize(vD);
+        float a = fbm(d * 2.2 + vec3(3.1, 0.0, 1.7)), b = fbm(d * 3.7 + vec3(-2.0, 4.0, 0.5)), c = fbm(d * 5.5 + vec3(7.0, 1.0, -3.0));
+        float band = exp(-pow((d.y - 0.18 + 0.25 * d.x) * 2.6, 2.0));
+        vec3 col = vec3(0.012, 0.016, 0.034);
+        col += vec3(0.20, 0.07, 0.28) * pow(a, 3.0) * 1.6 * (0.45 + band);
+        col += vec3(0.02, 0.16, 0.22) * pow(b, 4.0) * 2.2 * band;
+        col += vec3(0.30, 0.11, 0.04) * pow(c, 6.0) * 2.6 * band;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  }));
+  scene.add(sky);
+  const starTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'); const g = x.createRadialGradient(16, 16, 0, 16, 16, 16);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.3, 'rgba(255,255,255,0.6)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 32, 32); return new THREE.CanvasTexture(c); })();
+  for (const [n, size, bright] of [[4200, 1.6, 0.75], [420, 3.2, 1.0]]) {
+    const pos = new Float32Array(n * 3), col = new Float32Array(n * 3), v = new V3();
+    for (let i = 0; i < n; i++) {
+      v.set(rand() * 2 - 1, rand() * 2 - 1, rand() * 2 - 1).normalize().multiplyScalar(5000);
+      pos.set([v.x, v.y, v.z], i * 3);
+      const b = bright * (0.35 + Math.pow(rand(), 2.5) * 0.75), w = rand();
+      col.set([b * (0.85 + 0.15 * w), b * 0.92, b * (1.05 - 0.15 * w)], i * 3);
+    }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    scene.add(new THREE.Points(g, new THREE.PointsMaterial({ size, sizeAttenuation: false, vertexColors: true, map: starTex, transparent: true, depthWrite: false, fog: false })));
+  }
+}
+
+// ---------- textures for glows ----------
+function radial(stops, size = 128) {
+  const c = document.createElement('canvas'); c.width = c.height = size; const x = c.getContext('2d');
+  const g = x.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  for (const [o, col] of stops) g.addColorStop(o, col);
+  x.fillStyle = g; x.fillRect(0, 0, size, size);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
+}
+const TEX = {
+  engine: radial([[0, 'rgba(225,245,255,1)'], [0.25, 'rgba(120,200,255,0.75)'], [0.6, 'rgba(40,110,255,0.18)'], [1, 'rgba(0,0,0,0)']]),
+  flash: radial([[0, 'rgba(255,255,240,1)'], [0.2, 'rgba(255,240,190,0.9)'], [0.55, 'rgba(255,170,70,0.35)'], [1, 'rgba(0,0,0,0)']]),
+  fire: radial([[0, 'rgba(255,230,160,1)'], [0.3, 'rgba(255,140,40,0.85)'], [0.65, 'rgba(190,50,10,0.35)'], [1, 'rgba(0,0,0,0)']]),
+  ring: radial([[0, 'rgba(0,0,0,0)'], [0.72, 'rgba(0,0,0,0)'], [0.86, 'rgba(255,200,140,0.9)'], [1, 'rgba(0,0,0,0)']]),
+  spark: radial([[0, 'rgba(255,255,255,1)'], [0.4, 'rgba(255,200,120,0.8)'], [1, 'rgba(0,0,0,0)']], 32),
+  green: radial([[0, 'rgba(200,255,200,1)'], [0.35, 'rgba(60,255,90,0.6)'], [1, 'rgba(0,0,0,0)']], 64),
+  red: radial([[0, 'rgba(255,220,210,1)'], [0.35, 'rgba(255,60,40,0.6)'], [1, 'rgba(0,0,0,0)']], 64),
+};
+const additive = (map, color = 0xffffff) => new THREE.SpriteMaterial({ map, color, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, fog: false });
+
+// ---------- the chase: the Falcon weaves forward (toward -Z) through an endless asteroid field ----------
+const SPEED = 58;   // units per second
+function pathAt(t, out = new V3()) {
+  return out.set(24 * Math.sin(0.52 * t) + 9 * Math.sin(1.27 * t + 1.0), 10 * Math.sin(0.83 * t + 0.5) + 4.5 * Math.sin(1.9 * t), -SPEED * t);
+}
+const pathAtZ = (z, out) => pathAt(-z / SPEED, out);
+
+// ---------- asteroids ----------
+function noise3(seed) {
+  const r = mulberry(seed), P = new Float32Array(512); for (let i = 0; i < 512; i++) P[i] = r();
+  const h = (x, y, z) => P[((x * 73856093) ^ (y * 19349663) ^ (z * 83492791)) & 511];
+  return (x, y, z) => {
+    const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z), xf = x - xi, yf = y - yi, zf = z - zi;
+    const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf), w = zf * zf * (3 - 2 * zf);
+    const l = (a, b, t) => a + (b - a) * t;
+    return l(l(l(h(xi, yi, zi), h(xi + 1, yi, zi), u), l(h(xi, yi + 1, zi), h(xi + 1, yi + 1, zi), u), v),
+             l(l(h(xi, yi, zi + 1), h(xi + 1, yi, zi + 1), u), l(h(xi, yi + 1, zi + 1), h(xi + 1, yi + 1, zi + 1), u), v), w);
+  };
+}
+function rockGeometry(seed, detail) {
+  let g = new THREE.IcosahedronGeometry(1, detail);
+  g.deleteAttribute('normal'); g.deleteAttribute('uv');
+  g = mergeVertices(g);
+  const nz = noise3(seed), r0 = mulberry(seed + 7), pos = g.attributes.position, v = new V3();
+  const sx = 0.7 + 0.6 * r0(), sy = 0.55 + 0.45 * r0(), sz = 0.8 + 0.4 * r0();
+  const col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    const big = nz(v.x * 1.2 + 5, v.y * 1.2, v.z * 1.2), mid = nz(v.x * 2.7, v.y * 2.7 + 9, v.z * 2.7), fine = nz(v.x * 6, v.y * 6, v.z * 6 + 3);
+    let r = 0.66 + 0.5 * big + 0.2 * mid + 0.07 * fine;
+    const crater = Math.max(0, mid - 0.66) * 1.4; r -= crater;
+    v.multiplyScalar(r); v.x *= sx; v.y *= sy; v.z *= sz;
+    pos.setXYZ(i, v.x, v.y, v.z);
+    const shade = 0.5 + 0.3 * fine + 0.25 * big - crater;
+    col.set([shade, shade * 0.93, shade * 0.86], i * 3);
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g = g.toNonIndexed(); g.computeVertexNormals();   // faceted, like broken rock
+  return g;
+}
+const rockMat = new THREE.MeshStandardMaterial({ color: 0x8d8379, roughness: 0.97, metalness: 0.0, vertexColors: true, flatShading: true });
+const ROCKS = [];
+const FIELD_AHEAD = 560, FIELD_BEHIND = 110, TUBE = 34;
+const _pp = new V3();
+// put a rock somewhere at depth z, clear of the flight lane (the camera rides inside the lane too)
+function placeRock(r, z) {
+  pathAtZ(z, _pp);
+  if (rand() < 0.16) {   // a near miss: just under, or off to the far side of, the lane
+    const s = 1.5 + rand() * 2.8;
+    r.s = s;
+    if (rand() < 0.6) r.p.set(_pp.x + (rand() - 0.5) * 12, _pp.y - (12 + s), z);
+    else r.p.set(_pp.x + 12 + s, _pp.y - 3 - rand() * 6, z);
+  } else {
+    for (let k = 0; k < 30; k++) {
+      const s = rand() < 0.12 ? 7 + rand() * 9 : 0.8 + Math.pow(rand(), 1.6) * 5;
+      const x = -170 + rand() * 340, y = -95 + rand() * 190;
+      const d = Math.hypot(x - _pp.x, y - _pp.y);
+      if (d < TUBE + Math.max(0, s - 4)) continue;
+      r.s = s; r.p.set(x, y, z); break;
+    }
+  }
+  r.born = r.p.z;
+}
+{
+  const variants = [rockGeometry(11, 2), rockGeometry(23, 2), rockGeometry(37, 1), rockGeometry(51, 2), rockGeometry(64, 1)];
+  const per = 18;
+  variants.forEach((g, k) => {
+    const im = new THREE.InstancedMesh(g, rockMat, per); im.frustumCulled = false; scene.add(im);
+    for (let i = 0; i < per; i++) {
+      const tint = 0.75 + rand() * 0.4;
+      im.setColorAt(i, new THREE.Color(tint, tint * (0.95 + rand() * 0.08), tint * (0.88 + rand() * 0.1)));
+      const r = { im, i, p: new V3(), s: 1, axis: new V3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize(), spin: (0.1 + rand() * 0.5) * (rand() < 0.5 ? -1 : 1),
+        q0: new THREE.Quaternion().setFromAxisAngle(new V3(rand(), rand(), rand()).normalize(), rand() * 6.28), drift: new V3(rand() - 0.5, rand() - 0.5, rand() - 0.5).multiplyScalar(3) };
+      ROCKS.push(r);
+    }
+  });
+}
+function seedRocks(fz) { ROCKS.forEach((r, i) => placeRock(r, fz + FIELD_BEHIND - (i + rand()) / ROCKS.length * (FIELD_AHEAD + FIELD_BEHIND))); }
+const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new V3(), _rp = new V3();
+function updateRocks(t, fz, dt) {
+  for (const r of ROCKS) {
+    if (r.p.z > fz + FIELD_BEHIND) placeRock(r, r.p.z - (FIELD_AHEAD + FIELD_BEHIND));   // recycle the rocks left behind, far ahead
+    r.p.addScaledVector(r.drift, dt);
+    _q.setFromAxisAngle(r.axis, r.spin * t).multiply(r.q0);
+    const grow = smooth(fz - FIELD_AHEAD, fz - FIELD_AHEAD + 90, r.p.z);   // new rocks fade up out of the distance
+    _m.compose(r.p, _q, _s.setScalar(r.s * grow));
+    r.im.setMatrixAt(r.i, _m);
+  }
+  for (const r of ROCKS) { r.im.instanceMatrix.needsUpdate = true; if (r.im.instanceColor) r.im.instanceColor.needsUpdate = false; }
+}
+
+// ---------- ships ----------
+const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
+const load = url => new Promise((res, rej) => loader.load(url, g => res(g.scene), undefined, rej));
+function fit(root, size) {   // centre the model and scale its longest side to `size`; the models face +Z
+  root.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(root, true), dims = box.getSize(new V3()), c = box.getCenter(new V3());
+  root.position.sub(c);
+  const k = size / Math.max(dims.x, dims.y, dims.z);
+  const holder = new THREE.Group(); holder.add(root); holder.scale.setScalar(k);
+  const outer = new THREE.Group(); outer.add(holder);
+  return { obj: outer, dims: dims.multiplyScalar(k) };
+}
+const FAL_LEN = 15, TIE_SIZE = 7.4;
+const falcon = { obj: null, gun: new V3(0, 2.2, 1.2), glow: null, burst: 0 };
+const TIES = [0, 1, 2].map(i => ({ i, obj: null, lag: [0.42, 0.64, 0.86][i], ox: [5.5, -6, 2][i], oy: [3, -1.5, -4][i], ph: i * 2.1,
+  alive: true, deadUntil: 0, extra: 0, nextFire: 0.9 + i * 0.37, pos: new V3(), vel: new V3() }));
+
+// orient an object (nose +Z) along its velocity, banking into turns like a real flyer
+const _x = new V3(), _y = new V3(), _z = new V3(), _a = new V3(), _b = new THREE.Matrix4();
+function orient(obj, vel, acc, roll = 0, aimDir = null) {
+  _z.copy(vel).normalize();
+  if (aimDir) _z.lerp(aimDir, 0.3).normalize();
+  _a.copy(acc).addScaledVector(_z, -acc.dot(_z));
+  _y.copy(Y).multiplyScalar(24).add(_a).normalize();
+  _x.crossVectors(_y, _z).normalize(); _y.crossVectors(_z, _x);
+  if (roll) { const c = Math.cos(roll), s = Math.sin(roll), x0 = _x.clone(); _x.multiplyScalar(c).addScaledVector(_y, s); _y.multiplyScalar(c).addScaledVector(x0, -s); }
+  _b.makeBasis(_x, _y, _z);
+  obj.quaternion.setFromRotationMatrix(_b);
+}
+const _p0 = new V3(), _p2 = new V3();
+function kinematics(fn, t, pos, vel, acc) {   // position, velocity and acceleration along a path at time t
+  const h = 1 / 30;
+  fn(t - h, _p0); fn(t, pos); fn(t + h, _p2);
+  vel.subVectors(_p2, _p0).multiplyScalar(0.5 / h);
+  acc.copy(_p2).add(_p0).addScaledVector(pos, -2).multiplyScalar(1 / (h * h));
+}
+// a barrel roll every so often, to dodge the fire
+const ROLL_EVERY = 9.5, ROLL_LEN = 1.15;
+function falconRoll(t) {
+  const u = (t + 3) % ROLL_EVERY;
+  return u < ROLL_LEN ? Math.PI * 2 * smooth(0, 1, u / ROLL_LEN) * (Math.floor((t + 3) / ROLL_EVERY) % 2 ? -1 : 1) : 0;
+}
+const _r = new V3(), _u = new V3(), _tv = new V3(), _tq = new V3();
+function tiePathFn(T) {
+  return (t, out) => {
+    const tt = t - T.lag - T.extra;
+    pathAt(tt, out);
+    pathAt(tt + 0.05, _tq); _tv.subVectors(_tq, out).normalize();
+    _r.crossVectors(_tv, Y).normalize(); _u.crossVectors(_r, _tv);
+    return out.addScaledVector(_r, T.ox * Math.sin(tt * 1.3 + T.ph) + 1.4 * Math.sin(tt * 3.1 + T.ph * 2))
+              .addScaledVector(_u, T.oy * Math.cos(tt * 1.1 + T.ph) + 1.0 * Math.sin(tt * 2.6 + T.ph));
+  };
+}
+TIES.forEach(T => { T.fn = tiePathFn(T); });
+
+// ---------- laser bolts ----------
+function boltPool(core, halo) {
+  const max = 90;
+  const gCore = new THREE.CylinderGeometry(0.1, 0.1, 4.4, 6, 1); gCore.rotateX(Math.PI / 2);
+  const gHalo = new THREE.CylinderGeometry(0.26, 0.26, 5.0, 8, 1); gHalo.rotateX(Math.PI / 2);
+  const mk = (g, color, opacity) => { const m = new THREE.InstancedMesh(g, new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, fog: false }), max); m.frustumCulled = false; m.count = 0; scene.add(m); return m; };
+  return { a: mk(gCore, core, 1), b: mk(gHalo, halo, 0.3), list: [], max };
+}
+const GREEN = boltPool(new THREE.Color(0.8, 1.7, 0.85), new THREE.Color(0.2, 1.5, 0.35));
+const RED = boltPool(new THREE.Color(1.8, 0.8, 0.7), new THREE.Color(1.6, 0.16, 0.08));
+const BOLT_SPEED = 170;
+function fire(pool, from, dir, shooterVel, life, extra = {}) {
+  if (pool.list.length >= pool.max) pool.list.shift();
+  const v = dir.clone().normalize().multiplyScalar(BOLT_SPEED).add(shooterVel);
+  pool.list.push(Object.assign({ p: from.clone(), v, age: 0, life }, extra));
+}
+const _bq = new THREE.Quaternion(), _bz = new V3(0, 0, 1), _bd = new V3(), _one = new V3(1, 1, 1);
+function updateBolts(pool, dt) {
+  pool.list = pool.list.filter(b => (b.age += dt) < b.life && !b.done);
+  pool.list.forEach((b, i) => {
+    b.p.addScaledVector(b.v, dt);
+    _bq.setFromUnitVectors(_bz, _bd.copy(b.dir || b.v).normalize());
+    _m.compose(b.p, _bq, _one);
+    pool.a.setMatrixAt(i, _m); pool.b.setMatrixAt(i, _m);
+  });
+  pool.a.count = pool.b.count = pool.list.length;
+  pool.a.instanceMatrix.needsUpdate = pool.b.instanceMatrix.needsUpdate = true;
+}
+const greenMuzzle = additive(TEX.green), redMuzzle = additive(TEX.red);
+const muzzles = Array.from({ length: 10 }, () => { const s = new THREE.Sprite(redMuzzle); s.visible = false; scene.add(s); return { s, t: 9, follow: null, local: new V3() }; });
+let muzzleK = 0;
+function muzzle(obj, local, green) {
+  const m = muzzles[muzzleK++ % muzzles.length];
+  m.s.material = green ? greenMuzzle : redMuzzle; m.follow = obj; m.local.copy(local); m.t = 0; m.s.visible = true;
+}
+
+// ---------- explosions ----------
+const SPARKS = 70, DEBRIS = 9;
+const debrisGeo = new THREE.TetrahedronGeometry(0.55, 0), debrisMat = new THREE.MeshStandardMaterial({ color: 0x3a3f46, roughness: 0.7, metalness: 0.4 });
+const booms = Array.from({ length: 4 }, () => {
+  const flash = new THREE.Sprite(additive(TEX.flash)), fireS = new THREE.Sprite(additive(TEX.fire)), ring = new THREE.Sprite(additive(TEX.ring));
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SPARKS * 3), 3));
+  const sparks = new THREE.Points(sg, new THREE.PointsMaterial({ map: TEX.spark, color: 0xffc070, size: 1.0, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, fog: false }));
+  sparks.frustumCulled = false;
+  const debris = Array.from({ length: DEBRIS }, () => new THREE.Mesh(debrisGeo, debrisMat));
+  const g = new THREE.Group(); g.add(flash, fireS, ring, sparks, ...debris); g.visible = false; scene.add(g);
+  return { g, flash, fire: fireS, ring, sparks, debris, t: 99, drift: new V3(), sv: new Float32Array(SPARKS * 3), dv: debris.map(() => new V3()), dr: debris.map(() => new V3()) };
+});
+let boomK = 0;
+function explode(at, vel) {
+  const B = booms[boomK++ % booms.length];
+  B.g.position.copy(at); B.g.visible = true; B.t = 0; B.drift.copy(vel).multiplyScalar(0.55);
+  const sp = B.sparks.geometry.attributes.position;
+  for (let i = 0; i < SPARKS; i++) {
+    const d = new V3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize().multiplyScalar(10 + rand() * 34);
+    B.sv.set([d.x, d.y, d.z], i * 3); sp.setXYZ(i, 0, 0, 0);
+  }
+  B.debris.forEach((m, i) => { m.position.set(0, 0, 0); m.scale.setScalar(0.6 + rand() * 1.1); B.dv[i].set(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize().multiplyScalar(6 + rand() * 14); B.dr[i].set(rand() * 8, rand() * 8, rand() * 8); });
+}
+function updateBooms(dt) {
+  for (const B of booms) {
+    if (B.t > 2.6) { B.g.visible = false; continue; }
+    B.t += dt; const t = B.t;
+    B.g.position.addScaledVector(B.drift, dt);
+    B.flash.scale.setScalar(4 + 24 * smooth(0, 0.12, t)); B.flash.material.opacity = 1 - smooth(0.05, 0.45, t);
+    B.fire.scale.setScalar(5 + 14 * Math.sqrt(smooth(0, 1.1, t))); B.fire.material.opacity = 0.95 * (1 - smooth(0.25, 1.4, t));
+    B.ring.scale.setScalar(2 + 36 * smooth(0, 0.9, t)); B.ring.material.opacity = 0.8 * (1 - smooth(0.1, 0.9, t));
+    const sp = B.sparks.geometry.attributes.position, drag = Math.exp(-1.6 * dt);
+    for (let i = 0; i < SPARKS; i++) { B.sv[i * 3] *= drag; B.sv[i * 3 + 1] *= drag; B.sv[i * 3 + 2] *= drag; sp.setXYZ(i, sp.getX(i) + B.sv[i * 3] * dt, sp.getY(i) + B.sv[i * 3 + 1] * dt, sp.getZ(i) + B.sv[i * 3 + 2] * dt); }
+    sp.needsUpdate = true; B.sparks.material.opacity = 1 - smooth(0.6, 2.0, t);
+    B.debris.forEach((m, i) => { m.position.addScaledVector(B.dv[i], dt); m.rotation.x += B.dr[i].x * dt; m.rotation.y += B.dr[i].y * dt; m.rotation.z += B.dr[i].z * dt; m.visible = t < 2.4; });
+  }
+}
+
+// ---------- far scenery that travels with the camera: the Death Star ----------
+const far = new THREE.Group(); scene.add(far);
+const deathStar = new THREE.Group();
+deathStar.position.set(0.07, 0.11, -1).normalize().multiplyScalar(2400);
+far.add(deathStar);
+
+// ---------- camera shots: the camera swings between them, always riding along with the chase ----------
+// Where the camera sits around the Falcon: az 0 = behind it, 90 = off its left side, 180 = out in front.
+// look: how far the aim slides from the Falcon toward the TIEs.
+const SHOTS = [
+  { dur: 7.5, az: 50, el: 6, dist: 100, look: 0.5, swing: 2.4 },   // behind and alongside: the Falcon races toward the words, the TIEs on its tail
+  { dur: 6.0, az: 166, el: 4, dist: 88, look: 0.3, swing: 3.0 },    // out in front: the Falcon comes at us with the TIEs behind it
+  { dur: 6.5, az: -6, el: 2, dist: 100, look: 0.25, swing: 2.4 },   // from behind the TIEs, toward the Death Star
+];
+const SHOT_LEN = SHOTS.reduce((n, s) => n + s.dur, 0);
+const _co = new V3();
+function shotAt(t) {   // the blended camera placement
+  let u = ((t % SHOT_LEN) + SHOT_LEN) % SHOT_LEN, k = 0;
+  while (u > SHOTS[k].dur) { u -= SHOTS[k].dur; k++; }
+  const A = SHOTS[k], B = SHOTS[(k + 1) % SHOTS.length];
+  const w = smooth(A.dur - A.swing, A.dur, u);
+  // the camera always swings round the Falcon's left side, so the chase heads toward the words and the TIEs trail off to the right
+  const az = (A.az + (B.az - A.az) * w) * Math.PI / 180, el = (A.el + (B.el - A.el) * w) * Math.PI / 180, d = A.dist + (B.dist - A.dist) * w;
+  _co.set(-Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).multiplyScalar(d);
+  return { off: _co, look: A.look + (B.look - A.look) * w };
+}
+let wide = true;
+function layout() {
+  const w = Math.max(1, innerWidth), h = Math.max(1, innerHeight), aspect = w / h;
+  wide = aspect >= 1.25;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, w * h > 900000 ? 1.25 : 1.75));
+  renderer.setSize(w, h, false);
+  // the aim point sits right of centre beside the words, or low in the frame when the words are on top
+  const fw = wide ? w * 1.3 : w, fh = wide ? h : h * 1.42;
+  camera.setViewOffset(fw, fh, 0, 0, w, h);
+  camera.aspect = fw / fh;
+  const hfov = wide ? 62 : 54;
+  camera.fov = clamp(2 * Math.atan(Math.tan(hfov * Math.PI / 360) / camera.aspect) * 180 / Math.PI, 24, 78);
+  camera.updateProjectionMatrix();
+}
+const _look = new V3(), _tc = new V3(), _sway = new V3();
+function placeCamera(t) {
+  const S = shotAt(t);
+  _tc.set(0, 0, 0); let n = 0;
+  for (const T of TIES) if (T.obj) { _tc.add(T.alive ? T.pos : T.fn(t, _p0)); n++; }
+  if (n) _tc.multiplyScalar(1 / n); else _tc.copy(fpos);
+  // follow a smoothed Falcon so the camera doesn't jitter with every swerve
+  pathAt(t, _look); _look.x *= 0.5; _look.y *= 0.5;
+  _look.lerp(fpos, 0.72);
+  _sway.set(2.5 * Math.sin(t * 0.37), 1.6 * Math.sin(t * 0.29 + 1), 0);
+  camera.position.copy(_look).add(S.off).add(_sway);
+  _look.copy(fpos).lerp(_tc, S.look);
+  camera.lookAt(_look);
+  // keep the Falcon clear of the words: turn the camera a little whenever it drifts toward them
+  camera.updateMatrixWorld();
+  _tmp2.copy(fpos).project(camera);
+  const lo = wide ? 0.22 : -0.62, hi = wide ? 0.78 : 0.62, ylo = wide ? -0.62 : -0.86, yhi = wide ? 0.62 : -0.05;
+  const ex = _tmp2.x < lo ? lo - _tmp2.x : _tmp2.x > hi ? hi - _tmp2.x : 0;
+  const ey = _tmp2.y < ylo ? ylo - _tmp2.y : _tmp2.y > yhi ? yhi - _tmp2.y : 0;
+  if (_tmp2.z < 1 && (ex || ey)) {
+    const hx = Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect) * (camera.view ? camera.view.width / camera.view.fullWidth : 1);
+    const hy = camera.fov * Math.PI / 360 * (camera.view ? camera.view.height / camera.view.fullHeight : 1);
+    camera.rotateOnWorldAxis(Y, ex * hx);
+    camera.rotateX(-ey * hy);
+  }
+  // the Death Star hangs far ahead, and travels with the camera so it never gets closer
+  far.position.copy(camera.position);
+}
+
+// ---------- simulation ----------
+const fpos = new V3(), fvel = new V3(), facc = new V3();
+const _pr = new V3(), _aim = new V3(), _tacc = new V3(), _tmp2 = new V3(), _rel = new V3();
+const frustum = new THREE.Frustum(), _pv = new THREE.Matrix4();
+let simT = 0, nextKill = 3.0, killIdx = 0, nextFalconFire = 1.0, seeded = false;
+const hudText = document.getElementById('hud-text');
+let hudN = -1;
+function onScreen(p, margin = 0) {
+  _pv.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); frustum.setFromProjectionMatrix(_pv);
+  if (!frustum.containsPoint(p)) return false;
+  if (!margin) return true;
+  _tmp2.copy(p).project(camera); return Math.abs(_tmp2.x) < 1 - margin && Math.abs(_tmp2.y) < 1 - margin;
+}
+function lead(target, targetVel, from, fromVel) {   // where to aim so a bolt meets a moving target
+  _rel.subVectors(targetVel, fromVel);
+  let tof = target.distanceTo(from) / BOLT_SPEED;
+  for (let k = 0; k < 3; k++) { _aim.copy(target).addScaledVector(_rel, tof); tof = _aim.distanceTo(from) / BOLT_SPEED; }
+  return { point: _aim.clone(), tof };
+}
+const TIE_GUNS = [new V3(-0.7, -0.6, 1.8), new V3(0.7, -0.6, 1.8)];
+function step(dt) {
+  simT += dt; const t = simT;
+  kinematics(pathAt, t, fpos, fvel, facc);
+  if (!seeded) { seedRocks(fpos.z); seeded = true; }
+  for (const T of TIES) {
+    if (!T.alive && t > T.deadUntil) { T.alive = true; T.extra = 2.4; T.nextFire = t + 1.6; }   // a new TIE joins, racing up from behind
+    if (T.extra > 0) T.extra = Math.max(0, T.extra - dt * 0.9 * smooth(0, 0.4, T.extra));
+    if (T.alive) kinematics(T.fn, t, T.pos, T.vel, _tacc);
+    if (T.obj) {
+      T.obj.visible = T.alive;
+      if (T.alive) { T.obj.position.copy(T.pos); orient(T.obj, T.vel, _tacc, 0, _aim.copy(fpos).sub(T.pos).normalize()); }
+    }
+  }
+  placeCamera(t); camera.updateMatrixWorld();
+  if (falcon.obj) {
+    falcon.obj.position.copy(fpos);
+    orient(falcon.obj, fvel, facc, falconRoll(t));
+    falcon.obj.updateMatrixWorld();
+  }
+  for (const T of TIES) {
+    if (!T.alive || !T.obj) continue;
+    T.obj.updateMatrixWorld();
+    // twin bolts at the Falcon; they always just miss
+    if (falcon.obj && t >= T.nextFire) {
+      T.nextFire = t + 0.35 + rand() * 0.8;
+      if (onScreen(T.pos) && T.extra < 0.3) {
+        const L = lead(fpos, fvel, T.pos, T.vel), miss = new V3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize().multiplyScalar(3.5 + rand() * 4.5);
+        const dir = L.point.add(miss).sub(T.pos).normalize();
+        for (const g of TIE_GUNS) fire(GREEN, g.clone().applyQuaternion(T.obj.quaternion).add(T.pos), dir, T.vel, 1.2, { dir: dir.clone() });
+        muzzle(T.obj, new V3(0, -0.6, 2.2), true);
+      }
+    }
+  }
+  // the Falcon's gunner fires back, and every few seconds a TIE is hit
+  if (falcon.obj) {
+    const gun = falcon.gun.clone().applyQuaternion(falcon.obj.quaternion).add(fpos);
+    if (t >= nextKill) {
+      const order = [killIdx % 3, (killIdx + 1) % 3, (killIdx + 2) % 3].map(k => TIES[k]);
+      const T = order.find(T => T.alive && T.obj && T.extra < 0.05 && onScreen(T.pos, 0.1));
+      if (T) {
+        killIdx = T.i + 1;
+        const L = lead(T.pos, T.vel, gun, fvel), dir = L.point.clone().sub(gun).normalize();
+        fire(RED, gun, dir, fvel, L.tof + 0.05, { kill: T, hitAt: t + L.tof, dir: dir.clone() });
+        muzzle(falcon.obj, falcon.gun, false);
+        nextKill = t + 4.0 + rand() * 1.6;
+      } else nextKill = t + 0.4;
+    }
+    if (t >= nextFalconFire) {
+      nextFalconFire = t + 0.2;
+      if (!falcon.burst) falcon.burst = 2 + Math.floor(rand() * 3);
+      const alive = TIES.filter(T => T.alive && T.obj), T = alive[Math.floor(rand() * alive.length)];
+      if (T && onScreen(fpos)) {
+        const L = lead(T.pos, T.vel, gun, fvel), miss = new V3(rand() - 0.5, rand() - 0.5, rand() - 0.5).normalize().multiplyScalar(2.5 + rand() * 3.5);
+        const dir = L.point.add(miss).sub(gun).normalize();
+        fire(RED, gun, dir, fvel, 1.2, { dir }); muzzle(falcon.obj, falcon.gun, false);
+      }
+      if (--falcon.burst <= 0) { falcon.burst = 0; nextFalconFire = t + 1.0 + rand() * 1.3; }
+    }
+  }
+  for (const b of RED.list) if (b.kill && t >= b.hitAt) {
+    const T = b.kill; b.done = true;
+    if (T.alive) { explode(T.pos, T.vel); T.alive = false; T.deadUntil = t + 2.2; if (T.obj) T.obj.visible = false; }
+  }
+  updateBolts(GREEN, dt); updateBolts(RED, dt); updateBooms(dt);
+  for (const m of muzzles) {
+    if (m.t > 0.1) { m.s.visible = false; continue; }
+    m.t += dt; if (m.follow) m.s.position.copy(m.local).applyQuaternion(m.follow.quaternion).add(m.follow.position);
+    m.s.scale.setScalar(2.8 * (1 - m.t / 0.1) + 0.5);
+  }
+  if (falcon.glow) falcon.glow.material.opacity = 0.82 + 0.18 * Math.sin(t * 31) * Math.sin(t * 17);
+  updateRocks(t, fpos.z, dt);
+  deathStar.rotation.y = 0.6 + t * 0.01;
+  const n = TIES.filter(T => T.alive).length;
+  if (n !== hudN) { hudN = n; hudText.textContent = n === 1 ? '1 TIE FIGHTER IN PURSUIT' : `${n} TIE FIGHTERS IN PURSUIT`; }
+}
+
+// ---------- load, then run ----------
+layout();
+addEventListener('resize', layout);
+const ready = Promise.all([
+  load('falcon_lite.glb').then(root => {
+    const { obj, dims } = fit(root, FAL_LEN);
+    // the blue glow of the engines across the back of the hull
+    const glow = new THREE.Sprite(additive(TEX.engine, 0x9fdcff));
+    glow.position.set(0, 0.1, -dims.z / 2 - 0.3); glow.scale.set(dims.x * 0.9, dims.y * 1.2, 1);
+    obj.add(glow); falcon.glow = glow;
+    falcon.gun.set(0, dims.y * 0.5, dims.z * 0.04);
+    falcon.obj = obj; scene.add(obj);
+  }),
+  load('tie_lite.glb').then(root => {
+    root.traverse(o => { if (o.isMesh) o.material.side = THREE.DoubleSide; });   // the wing panels are single sheets
+    TIES.forEach((T, i) => { const { obj } = fit(i ? root.clone(true) : root, TIE_SIZE); T.obj = obj; scene.add(obj); });
+  }),
+  load('deathstar_lite.glb').then(root => {
+    const { obj } = fit(root, 330);
+    obj.traverse(o => { if (o.isMesh) { o.material.fog = false; } });
+    deathStar.add(obj);
+  }).catch(() => {}),   // the banner works without it
+]);
+let last = 0, running = false, visible = true, raf = 0;
+function frame(now) {
+  raf = 0;
+  if (!running) return;
+  const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+  step(dt); renderer.render(scene, camera);
+  raf = requestAnimationFrame(frame);
+}
+function setRunning(on) {
+  on = on && visible && !document.hidden && !STILL && !CAPTURE;
+  if (on === running) return;
+  running = on;
+  if (on) { last = performance.now(); if (!raf) raf = requestAnimationFrame(frame); }
+}
+const START = +(params.get('t') || (STILL ? 17.0 : 1.5));   // a still picture shows the Death Star shot
+ready.then(() => {
+  for (let t = 0; t < START; t += 1 / 30) step(1 / 30);
+  renderer.compile(scene, camera);
+  renderer.render(scene, camera);
+  document.body.classList.add('live'); document.body.classList.remove('poster');
+  if (!STILL && !CAPTURE) setRunning(true);
+  // pause whenever the banner is scrolled out of view or the tab is hidden, to spare laptops and phones
+  if ('IntersectionObserver' in window) new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting; setRunning(true); }).observe(canvas);
+  document.addEventListener('visibilitychange', () => setRunning(true));
+  addEventListener('resize', () => { if (!running) renderer.render(scene, camera); });
+}).catch(err => { console.error(err); document.body.classList.add('poster'); });
+
+if (CAPTURE) {
+  // for recording a preview: advance the simulation in fixed steps, then draw
+  const ndc = p => { const v = p.clone().project(camera); return [+v.x.toFixed(2), +v.y.toFixed(2), +camera.position.distanceTo(p).toFixed(0)]; };
+  window.__banner = { ready, advance(sec, fps = 30, draw = true) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) step(1 / fps); if (draw) renderer.render(scene, camera); return simT; }, time: () => simT,
+    proj: () => ({ t: +simT.toFixed(2), f: ndc(fpos), ties: TIES.map(T => T.alive ? ndc(T.pos) : null), ds: ndc(deathStar.getWorldPosition(new V3())) }) };
+}
+</script>
+</body>
+</html>
