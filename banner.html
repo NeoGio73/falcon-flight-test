@@ -351,6 +351,8 @@ function tiePathFn(T) {
     pathAt(tt, out);
     pathAt(tt + 0.05, _tq); _tv.subVectors(_tq, out).normalize();
     _r.crossVectors(_tv, Y).normalize(); _u.crossVectors(_r, _tv);
+    const wideIn = smooth(0, 1.6, T.extra);   // a replacement TIE swings in wide, clear of the camera
+    out.addScaledVector(_r, -30 * wideIn).addScaledVector(_u, 14 * wideIn);
     return out.addScaledVector(_r, T.ox * Math.sin(tt * 1.3 + T.ph) + 1.4 * Math.sin(tt * 3.1 + T.ph * 2))
               .addScaledVector(_u, T.oy * Math.cos(tt * 1.1 + T.ph) + 1.0 * Math.sin(tt * 2.6 + T.ph));
   };
@@ -421,9 +423,10 @@ function updateBooms(dt) {
     if (B.t > 2.6) { B.g.visible = false; continue; }
     B.t += dt; const t = B.t;
     B.g.position.addScaledVector(B.drift, dt);
-    B.flash.scale.setScalar(4 + 24 * smooth(0, 0.12, t)); B.flash.material.opacity = 1 - smooth(0.05, 0.45, t);
-    B.fire.scale.setScalar(5 + 14 * Math.sqrt(smooth(0, 1.1, t))); B.fire.material.opacity = 0.95 * (1 - smooth(0.25, 1.4, t));
-    B.ring.scale.setScalar(2 + 36 * smooth(0, 0.9, t)); B.ring.material.opacity = 0.8 * (1 - smooth(0.1, 0.9, t));
+    const near = smooth(12, 40, camera.position.distanceTo(B.g.position));   // a blast near the camera fades, so it can't fill the banner
+    B.flash.scale.setScalar(4 + 24 * smooth(0, 0.12, t)); B.flash.material.opacity = (1 - smooth(0.05, 0.45, t)) * near;
+    B.fire.scale.setScalar(5 + 14 * Math.sqrt(smooth(0, 1.1, t))); B.fire.material.opacity = 0.95 * (1 - smooth(0.25, 1.4, t)) * near;
+    B.ring.scale.setScalar(2 + 36 * smooth(0, 0.9, t)); B.ring.material.opacity = 0.8 * (1 - smooth(0.1, 0.9, t)) * near;
     const sp = B.sparks.geometry.attributes.position, drag = Math.exp(-1.6 * dt);
     for (let i = 0; i < SPARKS; i++) { B.sv[i * 3] *= drag; B.sv[i * 3 + 1] *= drag; B.sv[i * 3 + 2] *= drag; sp.setXYZ(i, sp.getX(i) + B.sv[i * 3] * dt, sp.getY(i) + B.sv[i * 3 + 1] * dt, sp.getZ(i) + B.sv[i * 3 + 2] * dt); }
     sp.needsUpdate = true; B.sparks.material.opacity = 1 - smooth(0.6, 2.0, t);
@@ -457,11 +460,18 @@ function shotAt(t) {   // the blended camera placement
   _co.set(-Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el)).multiplyScalar(d);
   return { off: _co, look: A.look + (B.look - A.look) * w };
 }
-let wide = true;
+let wide = true, sizeW = 0, sizeH = 0;
+// Fit the drawing to the banner's real size. D2L can load the banner while the announcement is still folded
+// shut (no size yet) and open it later without telling the page, so this is checked on every frame too.
 function layout() {
-  const w = Math.max(1, innerWidth), h = Math.max(1, innerHeight), aspect = w / h;
+  const w = Math.round(document.documentElement.clientWidth || innerWidth), h = Math.round(document.documentElement.clientHeight || innerHeight);
+  if (w < 16 || h < 16) return false;   // not shown yet; keep checking
+  const ratio = Math.min(window.devicePixelRatio || 1, w * h > 900000 ? 1.25 : 1.75);
+  if (w === sizeW && h === sizeH && renderer.getPixelRatio() === ratio) return false;
+  sizeW = w; sizeH = h;
+  const aspect = w / h;
   wide = aspect >= 1.25;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, w * h > 900000 ? 1.25 : 1.75));
+  renderer.setPixelRatio(ratio);
   renderer.setSize(w, h, false);
   // the aim point sits right of centre beside the words, or low in the frame when the words are on top
   const fw = wide ? w * 1.3 : w, fh = wide ? h : h * 1.42;
@@ -470,6 +480,7 @@ function layout() {
   const hfov = wide ? 62 : 54;
   camera.fov = clamp(2 * Math.atan(Math.tan(hfov * Math.PI / 360) / camera.aspect) * 180 / Math.PI, 24, 78);
   camera.updateProjectionMatrix();
+  return true;
 }
 const _look = new V3(), _tc = new V3(), _sway = new V3();
 function placeCamera(t) {
@@ -598,7 +609,9 @@ function step(dt) {
 
 // ---------- load, then run ----------
 layout();
-addEventListener('resize', layout);
+const relayout = () => { if (layout() && !running && document.body.classList.contains('live')) renderer.render(scene, camera); };
+addEventListener('resize', relayout);
+if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(document.documentElement);
 const ready = Promise.all([
   load('falcon_lite.glb').then(root => {
     const { obj, dims } = fit(root, FAL_LEN);
@@ -624,7 +637,8 @@ function frame(now) {
   raf = 0;
   if (!running) return;
   const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
-  step(dt); renderer.render(scene, camera);
+  layout();
+  try { step(dt); renderer.render(scene, camera); } catch (err) { console.error(err); }   // one bad frame never stops the show
   raf = requestAnimationFrame(frame);
 }
 function setRunning(on) {
@@ -641,15 +655,16 @@ ready.then(() => {
   document.body.classList.add('live'); document.body.classList.remove('poster');
   if (!STILL && !CAPTURE) setRunning(true);
   // pause whenever the banner is scrolled out of view or the tab is hidden, to spare laptops and phones
-  if ('IntersectionObserver' in window) new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting; setRunning(true); }).observe(canvas);
+  if ('IntersectionObserver' in window) new IntersectionObserver(es => { visible = es[es.length - 1].isIntersecting; relayout(); setRunning(true); }).observe(canvas);
   document.addEventListener('visibilitychange', () => setRunning(true));
-  addEventListener('resize', () => { if (!running) renderer.render(scene, camera); });
 }).catch(err => { console.error(err); document.body.classList.add('poster'); });
 
 if (CAPTURE) {
   // for recording a preview: advance the simulation in fixed steps, then draw
   const ndc = p => { const v = p.clone().project(camera); return [+v.x.toFixed(2), +v.y.toFixed(2), +camera.position.distanceTo(p).toFixed(0)]; };
   window.__banner = { ready, advance(sec, fps = 30, draw = true) { const n = Math.round(sec * fps); for (let i = 0; i < n; i++) step(1 / fps); if (draw) renderer.render(scene, camera); return simT; }, time: () => simT,
+    near: () => ({ t: +simT.toFixed(2), boom: Math.min(...booms.filter(B => B.t < 1.5).map(B => camera.position.distanceTo(B.g.position)), 999), tie: Math.min(...TIES.filter(T => T.alive).map(T => camera.position.distanceTo(T.pos)), 999),
+      flash: Math.max(0, ...booms.filter(B => B.t < 1.5 && B.g.visible).map(B => { const d = camera.position.distanceTo(B.g.position); return Math.max(B.flash.scale.x * B.flash.material.opacity, B.fire.scale.x * B.fire.material.opacity) / Math.max(d, 0.1); })) }),
     proj: () => ({ t: +simT.toFixed(2), f: ndc(fpos), ties: TIES.map(T => T.alive ? ndc(T.pos) : null), ds: ndc(deathStar.getWorldPosition(new V3())) }) };
 }
 </script>
