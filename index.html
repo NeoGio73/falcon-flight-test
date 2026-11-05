@@ -605,6 +605,13 @@ function glowTexture(rgba) {
 
 // ---------- Load models ----------
 const loader = new GLTFLoader();
+// Phones and tablets ("lite"): Safari on an iPad gives a page far less memory than a computer's browser does, and closes
+// the page if it goes over. So on those devices the biggest textures come as half-size copies (*_m.jpg), the background
+// loader only fetches the next couple of stops, and each stop is freed once the Falcon has jumped away from it.
+const LITE = new URLSearchParams(location.search).has('lite') || window.matchMedia('(pointer: coarse)').matches
+  || /iP(hone|od|ad)|Android/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const HALF_TEX = new Set(["kashyyyk_tex0.jpg", "kamino_tex0.jpg", "hoth_tex0.jpg", "geonosis_tex0.jpg", "deathstar_tex2.jpg", "deathstar_tex0.jpg", "bespin_tex0.jpg", "stardestroyer_tex0.jpg", "stardestroyer_tex1.jpg", "stardestroyer_tex2.jpg", "stardestroyer_tex3.jpg", "geonosis_tex4.jpg", "falcon_tex3.jpg", "falcon_tex0.jpg", "kashyyyk_tex1.jpg", "kashyyyk_tex3.jpg", "kamino_tex1.jpg", "kamino_tex3.jpg", "hoth_tex1.jpg", "hoth_tex3.jpg", "geonosis_tex1.jpg", "geonosis_tex3.jpg", "deathstar_tex1.jpg", "bespin_tex1.jpg"]);
+const liteTextures = json => { if (LITE) for (const im of json.images || []) if (im.uri && HALF_TEX.has(im.uri)) im.uri = im.uri.replace(/\.jpg$/, '_m.jpg'); };
 // The Falcon and Tatooine load first, and then the game can start. Everything else (the Death Star, each later
 // stop, the Star Destroyers, the Slave I, the battle's fighters) loads in the background, two at a time, in the
 // order the game needs it. If a student gets somewhere before its pieces have arrived, the game waits there.
@@ -613,11 +620,14 @@ const READY = {}, BGQ = [];
 const launchBtn = document.getElementById('launch-btn');
 const introBtn = document.getElementById('intro-btn');
 function bgAdd(order, key, run) { BGQ.push({ order, key, run }); }
+// how far along the route the background loader may reach (route order: Death Star 1, Hoth 2 ... battle 8)
+let bgReach = LITE ? 2.6 : Infinity, bgPump = () => {};
+function bgAhead(at) { if (!LITE) return; bgReach = Math.max(bgReach, at + 2.6); bgPump(); }
 function bgStart() {
   BGQ.sort((a, b) => a.order - b.order);
   let active = 0;
-  const pump = () => {
-    while (active < 2 && BGQ.length) {
+  const pump = bgPump = () => {
+    while (active < 2 && BGQ.length && BGQ[0].order <= bgReach) {
       const it = BGQ.shift(); active++;
       let finished = false;
       it.run(() => { if (finished) return; finished = true; READY[it.key] = true; active--; pump(); });
@@ -701,6 +711,7 @@ function loadModel(name, what, onLoad, onErr) {
       const bin = base64ToBytes(json.buffers[0].uri.slice(json.buffers[0].uri.indexOf(',') + 1));
       delete json.buffers[0].uri;
       json.buffers[0].byteLength = bin.length;
+      liteTextures(json);
       loader.parse(packGLB(json, bin), '', onLoad, fail);
     })
     .catch(fail);
@@ -1449,6 +1460,7 @@ const DEP = (() => {
 const D = { stage: 'none', t: 0, clock: 0, locked: false, warned: false };
 const SHOT_A = 4.5, BEAM_AT = 1.6, LOCK_TIME = 2.3, APPROACH_V = 150;
 function beginDeparture() {
+  bgAhead(1);
   J.phase = 'depart'; D.t = 0; D.stage = 'video'; D.warned = false; D.locked = false;
   L.phase = 'none';
   keys.clear();
@@ -1644,8 +1656,50 @@ function endEscape() {
 document.getElementById('again-btn').addEventListener('click', () => location.reload());
 
 // ---------- Planet stops: drop out of hyperspace, fly four rings, land, questions, take off, jump ----------
+// Free a model's memory for good: its geometry, materials and textures, on the graphics card and off it.
+function freeObject(obj) {
+  if (!obj) return;
+  obj.traverse(o => {
+    if (o.geometry) o.geometry.dispose();
+    for (const m of [].concat(o.material || [])) {
+      for (const k of ['map', 'normalMap', 'emissiveMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'alphaMap', 'bumpMap']) if (m[k]) m[k].dispose();
+      m.dispose();
+    }
+  });
+  obj.clear();
+}
+function freeVideo(v) {
+  if (!v) return;
+  try { v.pause(); v.querySelectorAll('source').forEach(so => so.remove()); v.removeAttribute('src'); v.load(); } catch (err) { /* already gone */ }
+}
+const FREED = new Set();
+function freeStop(key) {
+  if (FREED.has(key)) return; FREED.add(key);
+  if (key === 'tatooine') { freeObject(planet); freeVideo(takeoffVid); return; }
+  const st = STOPS[key]; if (!st) return;
+  freeObject(st.group); st.clouds = null;
+  freeVideo(st.landVid); freeVideo(st.offVid); freeVideo(st.boomVid);
+}
+// Called on arrival at the next place, when nothing behind is on screen any more.
+function freeBehind(key) {
+  if (!LITE) return;
+  const order = Object.keys(STOPS);
+  if (key === 'battle') {
+    order.forEach(k => { if (k !== 'kamino') freeStop(k); });   // Kamino stays: it hangs behind the Death Star
+    freeStop('tatooine'); freeObject(fleet);
+    if (flybyModel) { freeObject(flybyModel); flybyModel = null; }
+    if (FB.renderer) { try { FB.renderer.dispose(); FB.renderer.forceContextLoss(); } catch (err) { /* gone */ } if (FB.canvas) FB.canvas.remove(); FB.renderer = null; FB.canvas = null; }
+    return;
+  }
+  const i = order.indexOf(key);
+  if (i < 0) return;
+  freeStop('tatooine');
+  order.slice(0, i).forEach(freeStop);
+  if (i >= order.indexOf('kashyyyk')) freeObject(fleet);   // the Star Destroyers (after Geonosis)
+}
 function arriveStop(key) {
   endSuperlaser(true);
+  freeBehind(key); bgAhead(2 + Object.keys(STOPS).indexOf(key));
   const st = STOPS[key]; stop = st;
   J.phase = 'arrive'; J.t = 0;
   document.getElementById('hud').hidden = true; hideAlert();
@@ -2879,6 +2933,7 @@ function knockLayer(i) {
 }
 function beginBattle() {
   endAmbush(); endSuperlaser(true);
+  freeBehind('battle'); bgAhead(8);
   stop = BSTOP;
   J.phase = 'arrive'; J.t = 0;
   document.getElementById('hud').hidden = true; hideAlert();
@@ -3414,7 +3469,7 @@ function enableTouch() {
   TOUCH.on = true;
   TOUCH.phone = Math.min(window.innerWidth, window.innerHeight) < 600 || Math.min(screen.width, screen.height) < 600;
   document.body.classList.add('touch'); document.body.classList.toggle('phone', TOUCH.phone);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, TOUCH.phone ? 1.25 : 1.5));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, TOUCH.phone || LITE ? 1.25 : 1.5));
   // iPhones don't let a web page go full screen. Opened from a Home Screen icon, though, the game fills the screen.
   const iOS = /iP(hone|od|ad)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const fromIcon = navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches);
